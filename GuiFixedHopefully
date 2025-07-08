@@ -14,9 +14,9 @@ local function getCharacter()
     return char, hum, root
 end
 
+-- Create GUI
 local gui = Instance.new("ScreenGui")
 gui.Name = "DarkPowerGUI"
-gui.ResetOnSpawn = false
 gui.Parent = game.CoreGui
 
 local frame = Instance.new("Frame")
@@ -54,7 +54,6 @@ title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = header
 
 local closeBtn = Instance.new("TextButton")
-closeBtn.Name = "CloseButton"
 closeBtn.Text = "✕"
 closeBtn.Font = Enum.Font.GothamBold
 closeBtn.TextSize = 24
@@ -64,120 +63,45 @@ closeBtn.Size = UDim2.new(0, 40, 1, 0)
 closeBtn.Position = UDim2.new(1, -45, 0, 0)
 closeBtn.Parent = header
 
-local minBtn = Instance.new("TextButton")
-minBtn.Name = "MinButton"
-minBtn.Text = "-"
-minBtn.Font = Enum.Font.GothamBold
-minBtn.TextSize = 28
-minBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
-minBtn.BackgroundTransparency = 1
-minBtn.Size = UDim2.new(0, 40, 1, 0)
-minBtn.Position = UDim2.new(1, -90, 0, 0)
-minBtn.Parent = header
+-- Content Area
+local contentArea = Instance.new("Frame")
+contentArea.Size = UDim2.new(1, 0, 1, -40)
+contentArea.Position = UDim2.new(0, 0, 0, 40)
+contentArea.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+contentArea.Parent = frame
 
--- Left panel
-local leftPanel = Instance.new("Frame")
-leftPanel.Name = "LeftPanel"
-leftPanel.Size = UDim2.new(0, 130, 1, -40)
-leftPanel.Position = UDim2.new(0, 0, 0, 40)
-leftPanel.BackgroundTransparency = 1
-leftPanel.Parent = frame
+local contentCorner = Instance.new("UICorner")
+contentCorner.CornerRadius = UDim.new(0, 12)
+contentCorner.Parent = contentArea
 
-local leftLayout = Instance.new("UIListLayout")
-leftLayout.Padding = UDim.new(0, 10)
-leftLayout.FillDirection = Enum.FillDirection.Vertical
-leftLayout.SortOrder = Enum.SortOrder.LayoutOrder
-leftLayout.Parent = leftPanel
-
--- Right panel
-local rightPanel = Instance.new("Frame")
-rightPanel.Name = "RightPanel"
-rightPanel.Size = UDim2.new(1, -140, 1, -40)
-rightPanel.Position = UDim2.new(0, 140, 0, 40)
-rightPanel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-rightPanel.Parent = frame
-
-local rightCorner = Instance.new("UICorner")
-rightCorner.CornerRadius = UDim.new(0, 12)
-rightCorner.Parent = rightPanel
-
-local rightLayout = Instance.new("UIListLayout")
-rightLayout.Padding = UDim.new(0, 10)
-rightLayout.SortOrder = Enum.SortOrder.LayoutOrder
-rightLayout.Parent = rightPanel
-
--- Button creator
-local function createButton(text)
+-- Create Buttons
+local function createButton(text, callback)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 40)
+    btn.Size = UDim2.new(1, -20, 0, 40)
+    btn.Position = UDim2.new(0, 10, 0, 10)
     btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    btn.TextColor3 = Color3.fromRGB(230, 230, 230)
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.Gotham
     btn.TextSize = 18
     btn.Text = text
     btn.BorderSizePixel = 0
-
+    btn.Parent = contentArea
+    
     local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim.new(0, 10)
+    btnCorner.CornerRadius = UDim.new(0, 8)
     btnCorner.Parent = btn
-
+    
+    btn.MouseButton1Click:Connect(callback)
     return btn
 end
 
--- Create sections
-local sections = {
-    "Character Scripts",
-    "Teleports"
-}
-
-local contentFrames = {}
-
-for i, sectionName in ipairs(sections) do
-    local btn = createButton(sectionName)
-    btn.Parent = leftPanel
-
-    local contentFrame = Instance.new("Frame")
-    contentFrame.Size = UDim2.new(1, 0, 1, -20)
-    contentFrame.BackgroundTransparency = 1
-    contentFrame.Visible = (i == 1)
-    contentFrame.Parent = rightPanel
-
-    local contentLayout = Instance.new("UIListLayout")
-    contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    contentLayout.Padding = UDim.new(0, 8)
-    contentLayout.Parent = contentFrame
-
-    contentFrames[sectionName] = contentFrame
-
-    btn.MouseButton1Click:Connect(function()
-        for k, v in pairs(contentFrames) do
-            v.Visible = false
-        end
-        contentFrame.Visible = true
-    end)
-end
-
--- Character Scripts content
-local charFrame = contentFrames["Character Scripts"]
-
-local speedBtn = createButton("Speed Boost (WalkSpeed = 75)")
-speedBtn.Parent = charFrame
-
-local godBtn = createButton("God Mode (Infinite Health)")
-godBtn.Parent = charFrame
-
-local jumpBtn = createButton("High Jump (JumpPower = 200)")
-jumpBtn.Parent = charFrame
-
-local disableBtn = createButton("Disable Character Scripts")
-disableBtn.Parent = charFrame
-
-speedBtn.MouseButton1Click:Connect(function()
+-- Character Buttons
+createButton("Speed Boost (75)", function()
     local _, hum = getCharacter()
     if hum then hum.WalkSpeed = 75 end
 end)
 
-godBtn.MouseButton1Click:Connect(function()
+createButton("God Mode", function()
     local _, hum = getCharacter()
     if hum then
         hum.MaxHealth = math.huge
@@ -185,48 +109,51 @@ godBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-jumpBtn.MouseButton1Click:Connect(function()
+createButton("High Jump (200)", function()
     local _, hum = getCharacter()
     if hum then hum.JumpPower = 200 end
 end)
 
-disableBtn.MouseButton1Click:Connect(function()
+createButton("Reset", function()
     local _, hum = getCharacter()
     if hum then
         hum.WalkSpeed = 16
         hum.JumpPower = 50
         hum.MaxHealth = 100
-        if hum.Health > 100 then hum.Health = 100 end
+        hum.Health = 100
     end
 end)
 
--- Teleports content
-local tpFrame = contentFrames["Teleports"]
+-- Teleport Buttons
+createButton("Jungle Island", function()
+    local _, _, root = getCharacter()
+    if root then
+        root.CFrame = CFrame.new(Vector3.new(-8514, 50, 2393) + Vector3.new(0,5,0))
+    end
+end)
 
-local islands = {
-    ["Jungle Island"] = Vector3.new(-8514, 50, 2393),
-    ["Frozen Island"] = Vector3.new(-2176, 14, -402),
-    ["Legend Island"] = Vector3.new(4416, 1001, -3858),
-    ["Mythical Island"] = Vector3.new(2397, 15, 1072),
-}
+createButton("Frozen Island", function()
+    local _, _, root = getCharacter()
+    if root then
+        root.CFrame = CFrame.new(Vector3.new(-2738, 25, -405) + Vector3.new(0,5,0))
+    end
+end)
 
-for islandName, pos in pairs(islands) do
-    local tpBtn = createButton(islandName)
-    tpBtn.Parent = tpFrame
+createButton("Legend Island", function()
+    local _, _, root = getCharacter()
+    if root then
+        root.CFrame = CFrame.new(Vector3.new(4416, 1001, -3858) + Vector3.new(0,5,0))
+    end
+end)
 
-    tpBtn.MouseButton1Click:Connect(function()
-        local _, _, root = getCharacter()
-        if root then
-            root.CFrame = CFrame.new(pos + Vector3.new(0,5,0))
-        end
-    end)
-end
+createButton("Mythical Island", function()
+    local _, _, root = getCharacter()
+    if root then
+        root.CFrame = CFrame.new(Vector3.new(2397, 15, 1072) + Vector3.new(0,5,0))
+    end
+end)
 
--- Show first section by default
-contentFrames["Character Scripts"].Visible = true
-
--- Drag functionality
-local isDragging = false
+-- Drag Functionality
 local dragInput = nil
 local dragStart = nil
 local startPos = nil
@@ -238,38 +165,24 @@ end
 
 header.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        isDragging = true
         dragStart = input.Position
         startPos = frame.Position
         
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
-                isDragging = false
+                dragInput = nil
             end
         end)
     end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and isDragging then
+    if input == dragInput then
         update(input)
     end
 end)
 
--- Minimize button
-local minimized = false
-minBtn.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    if minimized then
-        rightPanel.Size = UDim2.new(0, 0, 1, -40)  -- Collapse right panel
-        leftPanel.Size = UDim2.new(1, 0, 1, -40)  -- Expand left panel
-    else
-        rightPanel.Size = UDim2.new(1, -140, 1, -40)  -- Restore right panel
-        leftPanel.Size = UDim2.new(0, 130, 1, -40)  -- Restore left panel
-    end
-end)
-
--- Close button
+-- Close Button
 closeBtn.MouseButton1Click:Connect(function()
     gui:Destroy()
 end)
