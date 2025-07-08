@@ -1,5 +1,11 @@
+-- Cleanup old GUI
+if game.CoreGui:FindFirstChild("DarkPowerGUI") then
+    game.CoreGui.DarkPowerGUI:Destroy()
+end
+
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
 
 local function getCharacter()
     local char = player.Character or player.CharacterAdded:Wait()
@@ -14,8 +20,9 @@ gui.ResetOnSpawn = false
 gui.Parent = game.CoreGui
 
 local frame = Instance.new("Frame")
+frame.Name = "MainFrame"
 frame.Size = UDim2.new(0, 400, 0, 300)
-frame.Position = UDim2.new(0.05, 0, 0.3, 0)
+frame.Position = UDim2.new(0.5, -200, 0.5, -150)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.BorderSizePixel = 0
 frame.Parent = gui
@@ -24,8 +31,9 @@ local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 15)
 corner.Parent = frame
 
--- Header
+-- Header (Drag Handle)
 local header = Instance.new("Frame")
+header.Name = "Header"
 header.Size = UDim2.new(1, 0, 0, 40)
 header.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 header.Parent = frame
@@ -46,27 +54,30 @@ title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = header
 
 local closeBtn = Instance.new("TextButton")
-closeBtn.Text = "X"
+closeBtn.Name = "CloseButton"
+closeBtn.Text = "✕"
 closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 22
+closeBtn.TextSize = 24
 closeBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
 closeBtn.BackgroundTransparency = 1
 closeBtn.Size = UDim2.new(0, 40, 1, 0)
-closeBtn.Position = UDim2.new(1, -50, 0, 0)
+closeBtn.Position = UDim2.new(1, -45, 0, 0)
 closeBtn.Parent = header
 
 local minBtn = Instance.new("TextButton")
+minBtn.Name = "MinButton"
 minBtn.Text = "-"
 minBtn.Font = Enum.Font.GothamBold
 minBtn.TextSize = 28
 minBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
 minBtn.BackgroundTransparency = 1
 minBtn.Size = UDim2.new(0, 40, 1, 0)
-minBtn.Position = UDim2.new(1, -95, 0, 0)
+minBtn.Position = UDim2.new(1, -90, 0, 0)
 minBtn.Parent = header
 
--- Left panel with section buttons
+-- Left panel
 local leftPanel = Instance.new("Frame")
+leftPanel.Name = "LeftPanel"
 leftPanel.Size = UDim2.new(0, 130, 1, -40)
 leftPanel.Position = UDim2.new(0, 0, 0, 40)
 leftPanel.BackgroundTransparency = 1
@@ -78,8 +89,9 @@ leftLayout.FillDirection = Enum.FillDirection.Vertical
 leftLayout.SortOrder = Enum.SortOrder.LayoutOrder
 leftLayout.Parent = leftPanel
 
--- Right panel where content shows
+-- Right panel
 local rightPanel = Instance.new("Frame")
+rightPanel.Name = "RightPanel"
 rightPanel.Size = UDim2.new(1, -140, 1, -40)
 rightPanel.Position = UDim2.new(0, 140, 0, 40)
 rightPanel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
@@ -94,7 +106,7 @@ rightLayout.Padding = UDim.new(0, 10)
 rightLayout.SortOrder = Enum.SortOrder.LayoutOrder
 rightLayout.Parent = rightPanel
 
--- Helper to create buttons
+-- Button creator
 local function createButton(text)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, 40)
@@ -105,14 +117,14 @@ local function createButton(text)
     btn.Text = text
     btn.BorderSizePixel = 0
 
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 10)
-    corner.Parent = btn
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 10)
+    btnCorner.Parent = btn
 
     return btn
 end
 
--- Create section buttons on left
+-- Create sections
 local sections = {
     "Character Scripts",
     "Teleports"
@@ -124,11 +136,10 @@ for i, sectionName in ipairs(sections) do
     local btn = createButton(sectionName)
     btn.Parent = leftPanel
 
-    -- Create content frame on right (hidden by default)
     local contentFrame = Instance.new("Frame")
     contentFrame.Size = UDim2.new(1, 0, 1, -20)
     contentFrame.BackgroundTransparency = 1
-    contentFrame.Visible = false
+    contentFrame.Visible = (i == 1)
     contentFrame.Parent = rightPanel
 
     local contentLayout = Instance.new("UIListLayout")
@@ -139,16 +150,14 @@ for i, sectionName in ipairs(sections) do
     contentFrames[sectionName] = contentFrame
 
     btn.MouseButton1Click:Connect(function()
-        -- Hide all other content frames
-        for k,v in pairs(contentFrames) do
+        for k, v in pairs(contentFrames) do
             v.Visible = false
         end
-        -- Show clicked one
         contentFrame.Visible = true
     end)
 end
 
--- === Fill Character Scripts content ===
+-- Character Scripts content
 local charFrame = contentFrames["Character Scripts"]
 
 local speedBtn = createButton("Speed Boost (WalkSpeed = 75)")
@@ -165,9 +174,7 @@ disableBtn.Parent = charFrame
 
 speedBtn.MouseButton1Click:Connect(function()
     local _, hum = getCharacter()
-    if hum then
-        hum.WalkSpeed = 75
-    end
+    if hum then hum.WalkSpeed = 75 end
 end)
 
 godBtn.MouseButton1Click:Connect(function()
@@ -180,9 +187,7 @@ end)
 
 jumpBtn.MouseButton1Click:Connect(function()
     local _, hum = getCharacter()
-    if hum then
-        hum.JumpPower = 200
-    end
+    if hum then hum.JumpPower = 200 end
 end)
 
 disableBtn.MouseButton1Click:Connect(function()
@@ -191,13 +196,11 @@ disableBtn.MouseButton1Click:Connect(function()
         hum.WalkSpeed = 16
         hum.JumpPower = 50
         hum.MaxHealth = 100
-        if hum.Health > 100 then
-            hum.Health = 100
-        end
+        if hum.Health > 100 then hum.Health = 100 end
     end
 end)
 
--- === Fill Teleports content ===
+-- Teleports content
 local tpFrame = contentFrames["Teleports"]
 
 local islands = {
@@ -212,7 +215,7 @@ for islandName, pos in pairs(islands) do
     tpBtn.Parent = tpFrame
 
     tpBtn.MouseButton1Click:Connect(function()
-        local char, hum, root = getCharacter()
+        local _, _, root = getCharacter()
         if root then
             root.CFrame = CFrame.new(pos + Vector3.new(0,5,0))
         end
@@ -222,18 +225,47 @@ end
 -- Show first section by default
 contentFrames["Character Scripts"].Visible = true
 
+-- Drag functionality
+local isDragging = false
+local dragInput = nil
+local dragStart = nil
+local startPos = nil
+
+local function update(input)
+    local delta = input.Position - dragStart
+    frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        isDragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                isDragging = false
+            end
+        end)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and isDragging then
+        update(input)
+    end
+end)
+
 -- Minimize button
 local minimized = false
 minBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
     if minimized then
-        rightPanel.Visible = false
-        leftPanel.Size = UDim2.new(1, 0, 1, -40)
-        frame.Size = UDim2.new(0, 160, 0, 300)
+        rightPanel.Size = UDim2.new(0, 0, 1, -40)  -- Collapse right panel
+        leftPanel.Size = UDim2.new(1, 0, 1, -40)  -- Expand left panel
     else
-        rightPanel.Visible = true
-        leftPanel.Size = UDim2.new(0, 130, 1, -40)
-        frame.Size = UDim2.new(0, 400, 0, 300)
+        rightPanel.Size = UDim2.new(1, -140, 1, -40)  -- Restore right panel
+        leftPanel.Size = UDim2.new(0, 130, 1, -40)  -- Restore left panel
     end
 end)
 
