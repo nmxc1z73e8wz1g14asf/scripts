@@ -1,228 +1,243 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
-local UIS = game:GetService("UserInputService")
-local CoreGui = game:GetService("CoreGui")
 
--- Remove existing GUI
-if CoreGui:FindFirstChild("UltraGUI") then
-    CoreGui.UltraGUI:Destroy()
+local function getCharacter()
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hum = char:WaitForChild("Humanoid")
+    local root = char:WaitForChild("HumanoidRootPart")
+    return char, hum, root
 end
 
--- Create GUI
-local screenGui = Instance.new("ScreenGui", CoreGui)
-screenGui.Name = "UltraGUI"
+local gui = Instance.new("ScreenGui")
+gui.Name = "DarkPowerGUI"
+gui.ResetOnSpawn = false
+gui.Parent = game.CoreGui
 
--- Utility: Rounded corners
-local function roundCorner(inst, radius)
-    local uic = Instance.new("UICorner", inst)
-    uic.CornerRadius = UDim.new(0, radius or 8)
-end
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 400, 0, 300)
+frame.Position = UDim2.new(0.05, 0, 0.3, 0)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.Parent = gui
 
--- Main Frame
-local main = Instance.new("Frame", screenGui)
-main.Size = UDim2.new(0, 540, 0, 360)
-main.Position = UDim2.new(0.5, -270, 0.5, -180)
-main.AnchorPoint = Vector2.new(0.5, 0.5)
-main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-roundCorner(main, 12)
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 15)
+corner.Parent = frame
 
--- Title Bar (Draggable)
-local titleBar = Instance.new("Frame", main)
-titleBar.Size = UDim2.new(1, 0, 0, 40)
-titleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-roundCorner(titleBar, 12)
+-- Header
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 40)
+header.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+header.Parent = frame
 
-local titleLabel = Instance.new("TextLabel", titleBar)
-titleLabel.Size = UDim2.new(1, -100, 1, 0)
-titleLabel.Position = UDim2.new(0, 20, 0, 0)
-titleLabel.Text = "Ultragui"
-titleLabel.Font = Enum.Font.GothamBold
-titleLabel.TextSize = 22
-titleLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
-titleLabel.BackgroundTransparency = 1
-titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+local headerCorner = Instance.new("UICorner")
+headerCorner.CornerRadius = UDim.new(0, 15)
+headerCorner.Parent = header
 
--- Close Button
-local closeBtn = Instance.new("TextButton", titleBar)
-closeBtn.Size = UDim2.new(0, 40, 0, 30)
-closeBtn.Position = UDim2.new(1, -50, 0, 5)
+local title = Instance.new("TextLabel")
+title.Text = "DarkPower GUI"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 22
+title.TextColor3 = Color3.fromRGB(220, 220, 220)
+title.BackgroundTransparency = 1
+title.Size = UDim2.new(1, -100, 1, 0)
+title.Position = UDim2.new(0, 15, 0, 0)
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = header
+
+local closeBtn = Instance.new("TextButton")
 closeBtn.Text = "X"
 closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 18
-closeBtn.TextColor3 = Color3.fromRGB(255,255,255)
-closeBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-roundCorner(closeBtn, 8)
-closeBtn.MouseButton1Click:Connect(function() screenGui:Destroy() end)
+closeBtn.TextSize = 22
+closeBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+closeBtn.BackgroundTransparency = 1
+closeBtn.Size = UDim2.new(0, 40, 1, 0)
+closeBtn.Position = UDim2.new(1, -50, 0, 0)
+closeBtn.Parent = header
 
--- Minimize Button
-local minBtn = Instance.new("TextButton", titleBar)
-minBtn.Size = UDim2.new(0, 40, 0, 30)
-minBtn.Position = UDim2.new(1, -100, 0, 5)
+local minBtn = Instance.new("TextButton")
 minBtn.Text = "-"
 minBtn.Font = Enum.Font.GothamBold
-minBtn.TextSize = 26
-minBtn.TextColor3 = Color3.fromRGB(255,255,255)
-minBtn.BackgroundColor3 = Color3.fromRGB(120, 120, 120)
-roundCorner(minBtn, 8)
+minBtn.TextSize = 28
+minBtn.TextColor3 = Color3.fromRGB(220, 220, 220)
+minBtn.BackgroundTransparency = 1
+minBtn.Size = UDim2.new(0, 40, 1, 0)
+minBtn.Position = UDim2.new(1, -95, 0, 0)
+minBtn.Parent = header
 
--- Dragging Logic
-local dragging, dragStart, startPos
-titleBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = main.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-titleBar.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        UIS.InputChanged:Connect(function(move)
-            if dragging and move.UserInputType == Enum.UserInputType.MouseMovement then
-                main.Position = UDim2.new(
-                    startPos.X.Scale, startPos.X.Offset + move.Position.X - dragStart.X,
-                    startPos.Y.Scale, startPos.Y.Offset + move.Position.Y - dragStart.Y
-                )
-            end
-        end)
-    end
-end)
+-- Left panel with section buttons
+local leftPanel = Instance.new("Frame")
+leftPanel.Size = UDim2.new(0, 130, 1, -40)
+leftPanel.Position = UDim2.new(0, 0, 0, 40)
+leftPanel.BackgroundTransparency = 1
+leftPanel.Parent = frame
 
--- Content Layout
-local content = Instance.new("Frame", main)
-content.Size = UDim2.new(1, -40, 1, -100)
-content.Position = UDim2.new(0, 20, 0, 60)
-content.BackgroundTransparency = 1
+local leftLayout = Instance.new("UIListLayout")
+leftLayout.Padding = UDim.new(0, 10)
+leftLayout.FillDirection = Enum.FillDirection.Vertical
+leftLayout.SortOrder = Enum.SortOrder.LayoutOrder
+leftLayout.Parent = leftPanel
 
--- Tab Bar
-local tabBar = Instance.new("Frame", main)
-tabBar.Size = UDim2.new(1, 0, 0, 40)
-tabBar.Position = UDim2.new(0, 0, 0, 40)
-tabBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+-- Right panel where content shows
+local rightPanel = Instance.new("Frame")
+rightPanel.Size = UDim2.new(1, -140, 1, -40)
+rightPanel.Position = UDim2.new(0, 140, 0, 40)
+rightPanel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+rightPanel.Parent = frame
 
--- Tab Buttons
-local function createTabText(name, x)
-    local btn = Instance.new("TextButton", tabBar)
-    btn.Size = UDim2.new(0, 260, 1, 0)
-    btn.Position = UDim2.new(0, x, 0, 0)
-    btn.Text = name
+local rightCorner = Instance.new("UICorner")
+rightCorner.CornerRadius = UDim.new(0, 12)
+rightCorner.Parent = rightPanel
+
+local rightLayout = Instance.new("UIListLayout")
+rightLayout.Padding = UDim.new(0, 10)
+rightLayout.SortOrder = Enum.SortOrder.LayoutOrder
+rightLayout.Parent = rightPanel
+
+-- Helper to create buttons
+local function createButton(text)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 40)
+    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    btn.TextColor3 = Color3.fromRGB(230, 230, 230)
     btn.Font = Enum.Font.Gotham
     btn.TextSize = 18
-    btn.TextColor3 = Color3.fromRGB(230,230,230)
-    btn.BackgroundColor3 = Color3.fromRGB(70,70,70)
-    roundCorner(btn, 8)
+    btn.Text = text
+    btn.BorderSizePixel = 0
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = btn
+
     return btn
 end
 
-local charTab = createTabText("Characterscripts", 10)
-local tpTab   = createTabText("Teleports", 270)
+-- Create section buttons on left
+local sections = {
+    "Character Scripts",
+    "Teleports"
+}
 
--- Content Frames per Tab
-local charFrame = Instance.new("Frame", content)
-charFrame.Size = UDim2.new(0, 260, 1, 0)
-charFrame.BackgroundTransparency = 1
+local contentFrames = {}
 
-local tpFrame   = Instance.new("Frame", content)
-tpFrame.Size = UDim2.new(0, 260, 1, 0)
-tpFrame.Position = UDim2.new(0, 280, 0, 0)
-tpFrame.BackgroundTransparency = 1
-tpFrame.Visible = false
+for i, sectionName in ipairs(sections) do
+    local btn = createButton(sectionName)
+    btn.Parent = leftPanel
 
--- Tab Switching
-local function switchTo(tab)
-    charFrame.Visible = (tab == "char")
-    tpFrame.Visible = (tab == "tp")
-    charTab.BackgroundColor3 = (tab == "char" and Color3.fromRGB(100,100,100) or Color3.fromRGB(70,70,70))
-    tpTab.BackgroundColor3   = (tab == "tp"   and Color3.fromRGB(100,100,100) or Color3.fromRGB(70,70,70))
-end
+    -- Create content frame on right (hidden by default)
+    local contentFrame = Instance.new("Frame")
+    contentFrame.Size = UDim2.new(1, 0, 1, -20)
+    contentFrame.BackgroundTransparency = 1
+    contentFrame.Visible = false
+    contentFrame.Parent = rightPanel
 
-charTab.MouseButton1Click:Connect(function() switchTo("char") end)
-tpTab.MouseButton1Click:Connect(function() switchTo("tp") end)
-switchTo("char")
+    local contentLayout = Instance.new("UIListLayout")
+    contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    contentLayout.Padding = UDim.new(0, 8)
+    contentLayout.Parent = contentFrame
 
--- Button Creator
-local function makeBtn(parent, text, cb)
-    local b = Instance.new("TextButton", parent)
-    b.Size = UDim2.new(1, 0, 0, 50)
-    b.BackgroundColor3 = Color3.fromRGB(70,70,70)
-    b.TextColor3 = Color3.fromRGB(230,230,230)
-    b.Font = Enum.Font.Gotham
-    b.TextSize = 18
-    b.Text = text
-    roundCorner(b, 8)
-    b.AutoButtonColor = true
-    b.MouseButton1Click:Connect(cb)
-    return b
-end
+    contentFrames[sectionName] = contentFrame
 
--- Character Script Callbacks
-local function onButton(btn, enableFunc, disableFunc)
-    local enabled = false
     btn.MouseButton1Click:Connect(function()
-        enabled = not enabled
-        if enabled then
-            btn.BackgroundColor3 = Color3.fromRGB(0,150,0)
-            enableFunc()
-        else
-            btn.BackgroundColor3 = Color3.fromRGB(70,70,70)
-            disableFunc()
+        -- Hide all other content frames
+        for k,v in pairs(contentFrames) do
+            v.Visible = false
+        end
+        -- Show clicked one
+        contentFrame.Visible = true
+    end)
+end
+
+-- === Fill Character Scripts content ===
+local charFrame = contentFrames["Character Scripts"]
+
+local speedBtn = createButton("Speed Boost (WalkSpeed = 75)")
+speedBtn.Parent = charFrame
+
+local godBtn = createButton("God Mode (Infinite Health)")
+godBtn.Parent = charFrame
+
+local jumpBtn = createButton("High Jump (JumpPower = 200)")
+jumpBtn.Parent = charFrame
+
+local disableBtn = createButton("Disable Character Scripts")
+disableBtn.Parent = charFrame
+
+speedBtn.MouseButton1Click:Connect(function()
+    local _, hum = getCharacter()
+    if hum then
+        hum.WalkSpeed = 75
+    end
+end)
+
+godBtn.MouseButton1Click:Connect(function()
+    local _, hum = getCharacter()
+    if hum then
+        hum.MaxHealth = math.huge
+        hum.Health = math.huge
+    end
+end)
+
+jumpBtn.MouseButton1Click:Connect(function()
+    local _, hum = getCharacter()
+    if hum then
+        hum.JumpPower = 200
+    end
+end)
+
+disableBtn.MouseButton1Click:Connect(function()
+    local _, hum = getCharacter()
+    if hum then
+        hum.WalkSpeed = 16
+        hum.JumpPower = 50
+        hum.MaxHealth = 100
+        if hum.Health > 100 then
+            hum.Health = 100
+        end
+    end
+end)
+
+-- === Fill Teleports content ===
+local tpFrame = contentFrames["Teleports"]
+
+local islands = {
+    ["Jungle Island"] = Vector3.new(-8514, 50, 2393),
+    ["Frozen Island"] = Vector3.new(-2176, 14, -402),
+    ["Legend Island"] = Vector3.new(4416, 1001, -3858),
+    ["Mythical Island"] = Vector3.new(2397, 15, 1072),
+}
+
+for islandName, pos in pairs(islands) do
+    local tpBtn = createButton(islandName)
+    tpBtn.Parent = tpFrame
+
+    tpBtn.MouseButton1Click:Connect(function()
+        local char, hum, root = getCharacter()
+        if root then
+            root.CFrame = CFrame.new(pos + Vector3.new(0,5,0))
         end
     end)
 end
 
--- Implement script functionalities
-local char = player.Character or player.CharacterAdded:Wait()
-local hum = char:WaitForChild("Humanoid")
-local healthConn
+-- Show first section by default
+contentFrames["Character Scripts"].Visible = true
 
-onButton(makeBtn(charFrame, "Speed", function() hum.WalkSpeed = 50 end, function() hum.WalkSpeed = 16 end),
-    function() end, function() end)
-
-onButton(makeBtn(charFrame, "High Jump", function() hum.JumpPower = 100 end, function() hum.JumpPower = 50 end),
-    function() end, function() end)
-
-onButton(makeBtn(charFrame, "Godmode", function()
-    hum.MaxHealth = math.huge
-    hum.Health = hum.MaxHealth
-    healthConn = hum.HealthChanged:Connect(function()
-        hum.Health = hum.MaxHealth
-    end)
-end, function()
-    if healthConn then healthConn:Disconnect() end
-    hum.MaxHealth = 100
-    hum.Health = 100
-end),
-    function() end, function() end)
-
-onButton(makeBtn(charFrame, "Invisibility", function()
-    for _, p in ipairs(player.Character:GetChildren()) do
-        if p:IsA("BasePart") then p.Transparency = 1 end
-        if p:IsA("Accessory") and p:FindFirstChild("Handle") then p.Handle.Transparency = 1 end
+-- Minimize button
+local minimized = false
+minBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        rightPanel.Visible = false
+        leftPanel.Size = UDim2.new(1, 0, 1, -40)
+        frame.Size = UDim2.new(0, 160, 0, 300)
+    else
+        rightPanel.Visible = true
+        leftPanel.Size = UDim2.new(0, 130, 1, -40)
+        frame.Size = UDim2.new(0, 400, 0, 300)
     end
-end, function()
-    for _, p in ipairs(player.Character:GetChildren()) do
-        if p:IsA("BasePart") then p.Transparency = 0 end
-        if p:IsA("Accessory") and p:FindFirstChild("Handle") then p.Handle.Transparency = 0 end
-    end
-end),
-    function() end, function() end)
+end)
 
--- Teleport Buttons
-local locations = {
-    {"Jungle Island", Vector3.new(-8393,53,2402)},
-    {"Legend Island", Vector3.new(4524,1001,-3842)},
-    {"Magma Island", Vector3.new(-6813,35,-1279)},
-}
-
-for _, loc in ipairs(locations) do
-    makeBtn(tpFrame, loc[1], function()
-        local c = player.Character or player.CharacterAdded:Wait()
-        c:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(loc[2])
-    end).Position = UDim2.new(0,0,0,(#tpFrame:GetChildren()-1)*60)
-end
-
-
+-- Close button
+closeBtn.MouseButton1Click:Connect(function()
+    gui:Destroy()
+end)
