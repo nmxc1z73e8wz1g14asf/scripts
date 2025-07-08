@@ -1,0 +1,403 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+
+-- Remove existing GUI if any
+local CoreGui = game:GetService("CoreGui")
+local existingGui = CoreGui:FindFirstChild("DeltaExecutorGUI")
+if existingGui then existingGui:Destroy() end
+
+-- Helper function to create UI corner for rounded corners
+local function createUICorner(parent, radius)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, radius or 15)
+    corner.Parent = parent
+    return corner
+end
+
+-- Create ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "DeltaExecutorGUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = CoreGui
+
+-- Main frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 380, 0, 350)
+mainFrame.Position = UDim2.new(0.5, -190, 0.5, -175)
+mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
+createUICorner(mainFrame, 15)
+
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 2
+stroke.Color = Color3.fromRGB(60, 60, 60)
+stroke.Parent = mainFrame
+
+-- Title bar
+local titleBar = Instance.new("Frame")
+titleBar.Name = "TitleBar"
+titleBar.Size = UDim2.new(1, 0, 0, 35)
+titleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+titleBar.BorderSizePixel = 0
+titleBar.Parent = mainFrame
+createUICorner(titleBar, 15)
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Text = "Delta Executor GUI"
+titleLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Size = UDim2.new(1, -100, 1, 0)
+titleLabel.Position = UDim2.new(0, 10, 0, 0)
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextSize = 18
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = titleBar
+
+-- Minimize button
+local minimizeBtn = Instance.new("TextButton")
+minimizeBtn.Size = UDim2.new(0, 30, 0, 25)
+minimizeBtn.Position = UDim2.new(1, -70, 0, 5)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+minimizeBtn.BorderSizePixel = 0
+minimizeBtn.Text = "—"
+minimizeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+minimizeBtn.Font = Enum.Font.GothamBold
+minimizeBtn.TextSize = 20
+minimizeBtn.Parent = titleBar
+createUICorner(minimizeBtn, 8)
+
+-- Close button
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 30, 0, 25)
+closeBtn.Position = UDim2.new(1, -35, 0, 5)
+closeBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+closeBtn.BorderSizePixel = 0
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 20
+closeBtn.Parent = titleBar
+createUICorner(closeBtn, 8)
+
+-- Container frame for panels
+local panelsContainer = Instance.new("Frame")
+panelsContainer.Size = UDim2.new(1, -20, 1, -55)
+panelsContainer.Position = UDim2.new(0, 10, 0, 45)
+panelsContainer.BackgroundTransparency = 1
+panelsContainer.Parent = mainFrame
+-- We'll use absolute size for animation
+
+-- Side panels: one for CharacterScripts, one for Teleports
+local panelWidth = 170
+local panelHeight = 300
+
+-- CharacterScripts panel
+local charScriptsPanel = Instance.new("Frame")
+charScriptsPanel.Name = "CharScriptsPanel"
+charScriptsPanel.Size = UDim2.new(0, panelWidth, 0, panelHeight)
+charScriptsPanel.Position = UDim2.new(0, 0, 0, 0)
+charScriptsPanel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+charScriptsPanel.Parent = panelsContainer
+createUICorner(charScriptsPanel, 12)
+
+local charScriptsTitle = Instance.new("TextLabel")
+charScriptsTitle.Text = "Character Scripts ▶"
+charScriptsTitle.Size = UDim2.new(1, 0, 0, 30)
+charScriptsTitle.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+charScriptsTitle.BorderSizePixel = 0
+charScriptsTitle.TextColor3 = Color3.fromRGB(220, 220, 220)
+charScriptsTitle.Font = Enum.Font.GothamBold
+charScriptsTitle.TextSize = 18
+charScriptsTitle.Parent = charScriptsPanel
+createUICorner(charScriptsTitle, 12)
+
+-- Container for buttons inside CharacterScripts panel
+local charScriptsButtons = Instance.new("Frame")
+charScriptsButtons.Size = UDim2.new(1, -10, 1, -40)
+charScriptsButtons.Position = UDim2.new(0, 5, 0, 35)
+charScriptsButtons.BackgroundTransparency = 1
+charScriptsButtons.Parent = charScriptsPanel
+
+local charScriptsLayout = Instance.new("UIListLayout")
+charScriptsLayout.Padding = UDim.new(0, 10)
+charScriptsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+charScriptsLayout.Parent = charScriptsButtons
+
+-- Teleports panel
+local teleportsPanel = Instance.new("Frame")
+teleportsPanel.Name = "TeleportsPanel"
+teleportsPanel.Size = UDim2.new(0, panelWidth, 0, panelHeight)
+teleportsPanel.Position = UDim2.new(1, 10, 0, 0) -- Start hidden offscreen right
+teleportsPanel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+teleportsPanel.Parent = panelsContainer
+createUICorner(teleportsPanel, 12)
+
+local teleportsTitle = Instance.new("TextLabel")
+teleportsTitle.Text = "Teleports ▶"
+teleportsTitle.Size = UDim2.new(1, 0, 0, 30)
+teleportsTitle.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+teleportsTitle.BorderSizePixel = 0
+teleportsTitle.TextColor3 = Color3.fromRGB(220, 220, 220)
+teleportsTitle.Font = Enum.Font.GothamBold
+teleportsTitle.TextSize = 18
+teleportsTitle.Parent = teleportsPanel
+createUICorner(teleportsTitle, 12)
+
+local teleportsButtons = Instance.new("Frame")
+teleportsButtons.Size = UDim2.new(1, -10, 1, -40)
+teleportsButtons.Position = UDim2.new(0, 5, 0, 35)
+teleportsButtons.BackgroundTransparency = 1
+teleportsButtons.Parent = teleportsPanel
+
+local teleportsLayout = Instance.new("UIListLayout")
+teleportsLayout.Padding = UDim.new(0, 10)
+teleportsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+teleportsLayout.Parent = teleportsButtons
+
+-- Button creator helper
+local function createButton(parent, text)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 40)
+    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    btn.BorderSizePixel = 0
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(220, 220, 220)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 18
+    btn.AutoButtonColor = true
+    btn.Parent = parent
+    createUICorner(btn, 12)
+    return btn
+end
+
+-- Animate function for slide in/out
+local TweenService = game:GetService("TweenService")
+local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+local function slidePanel(panel, show)
+    local goal
+    if show then
+        goal = UDim2.new(0, 0, 0, 0)
+    else
+        goal = UDim2.new(1, 10, 0, 0)
+    end
+    TweenService:Create(panel, tweenInfo, {Position = goal}):Play()
+end
+
+-- Toggle panel open/close and update title arrows
+local charScriptsOpen = true
+charScriptsTitle.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        charScriptsOpen = not charScriptsOpen
+        if charScriptsOpen then
+            slidePanel(charScriptsPanel, true)
+            slidePanel(teleportsPanel, false)
+            charScriptsTitle.Text = "Character Scripts ▶"
+            teleportsTitle.Text = "◀ Teleports"
+        else
+            slidePanel(charScriptsPanel, false)
+            charScriptsTitle.Text = "◀ Character Scripts"
+        end
+    end
+end)
+
+local teleportsOpen = false
+teleportsTitle.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        teleportsOpen = not teleportsOpen
+        if teleportsOpen then
+            slidePanel(teleportsPanel, true)
+            slidePanel(charScriptsPanel, false)
+            teleportsTitle.Text = "Teleports ▶"
+            charScriptsTitle.Text = "◀ Character Scripts"
+        else
+            slidePanel(teleportsPanel, false)
+            teleportsTitle.Text = "◀ Teleports"
+        end
+    end
+end)
+
+-- Close & Minimize functionality
+closeBtn.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+end)
+
+local minimized = false
+minimizeBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        mainFrame.Size = UDim2.new(0, 380, 0, 40)
+        charScriptsPanel.Visible = false
+        teleportsPanel.Visible = false
+    else
+        mainFrame.Size = UDim2.new(0, 380, 0, 350)
+        charScriptsPanel.Visible = charScriptsOpen
+        teleportsPanel.Visible = teleportsOpen
+    end
+end)
+
+-- ===================
+-- Character Scripts --
+-- ===================
+
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- Keep track of connections so we can clean up if needed
+local connections = {}
+
+-- Clear connections helper
+local function clearConnections()
+    for _, conn in pairs(connections) do
+        if conn.Connected then
+            conn:Disconnect()
+        end
+    end
+    connections = {}
+end
+
+-- Godmode toggle
+local godmodeEnabled = false
+local godmodeConnection
+
+local godmodeBtn = createButton(charScriptsButtons, "Godmode")
+godmodeBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+
+godmodeBtn.MouseButton1Click:Connect(function()
+    godmodeEnabled = not godmodeEnabled
+    if godmodeEnabled then
+        godmodeBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+        humanoid.MaxHealth = 100
+        humanoid.Health = 100
+        godmodeConnection = humanoid.HealthChanged:Connect(function(health)
+            if godmodeEnabled and health < humanoid.MaxHealth then
+                humanoid.Health = humanoid.MaxHealth
+            end
+        end)
+        table.insert(connections, godmodeConnection)
+    else
+        godmodeBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        if godmodeConnection then
+            godmodeConnection:Disconnect()
+            godmodeConnection = nil
+        end
+        humanoid.MaxHealth = 100
+        humanoid.Health = 100
+    end
+end)
+
+-- Speed toggle
+local speedEnabled = false
+local speedBtn = createButton(charScriptsButtons, "Speed")
+speedBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+
+speedBtn.MouseButton1Click:Connect(function()
+    speedEnabled = not speedEnabled
+    if speedEnabled then
+        speedBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+        humanoid.WalkSpeed = 50
+    else
+        speedBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        humanoid.WalkSpeed = 16
+    end
+end)
+
+-- HighJump toggle
+local highjumpEnabled = false
+local highjumpBtn = createButton(charScriptsButtons, "HighJump")
+highjumpBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+
+highjumpBtn.MouseButton1Click:Connect(function()
+    highjumpEnabled = not highjumpEnabled
+    if highjumpEnabled then
+        highjumpBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+        humanoid.JumpPower = 100
+    else
+        highjumpBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        humanoid.JumpPower = 50
+    end
+end)
+
+-- Invisibility toggle
+local invisibilityEnabled = false
+local invisibilityBtn = createButton(charScriptsButtons, "Invisibility")
+invisibilityBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+
+local function setCharacterTransparency(transparency)
+    for _, part in pairs(character:GetChildren()) do
+        if part:IsA("BasePart") or part:IsA("Decal") then
+            part.Transparency = transparency
+        elseif part:IsA("Accessory") and part:FindFirstChild("Handle") then
+            part.Handle.Transparency = transparency
+        end
+    end
+end
+
+invisibilityBtn.MouseButton1Click:Connect(function()
+    invisibilityEnabled = not invisibilityEnabled
+    if invisibilityEnabled then
+        invisibilityBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+        setCharacterTransparency(1)
+    else
+        invisibilityBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        setCharacterTransparency(0)
+    end
+end)
+
+-- Reapply scripts on respawn
+local function onCharacterAdded(char)
+    character = char
+    humanoid = char:WaitForChild("Humanoid")
+
+    -- Reset toggles UI and states
+    godmodeEnabled = false
+    speedEnabled = false
+    highjumpEnabled = false
+    invisibilityEnabled = false
+
+    godmodeBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    speedBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    highjumpBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    invisibilityBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+
+    -- Reset humanoid values
+    humanoid.WalkSpeed = 16
+    humanoid.JumpPower = 50
+    humanoid.MaxHealth = 100
+    humanoid.Health = 100
+
+    setCharacterTransparency(0)
+
+    clearConnections()
+end
+
+player.CharacterAdded:Connect(onCharacterAdded)
+
+-- ===================
+-- Teleports --
+-- ===================
+
+-- Coordinates you gave me:
+local teleports = {
+    {name = "Legend Island", pos = Vector3.new(4524, 1001, -3842)},
+    {name = "Jungle Island", pos = Vector3.new(-8393, 53, 2402)},
+    {name = "Magma Island", pos = Vector3.new(-6813, 35, -1279)},
+}
+
+for _, tp in ipairs(teleports) do
+    local tpBtn = createButton(teleportsButtons, tp.name)
+    tpBtn.MouseButton1Click:Connect(function()
+        local char = player.Character or player.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        hrp.CFrame = CFrame.new(tp.pos)
+    end)
+end
+
+-- Initially, show only CharacterScripts panel, hide Teleports offscreen
+teleportsPanel.Position = UDim2.new(1, 10, 0, 0)
+
+return screenGui
