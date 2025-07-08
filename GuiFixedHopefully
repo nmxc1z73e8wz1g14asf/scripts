@@ -1,69 +1,69 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
-
--- Clear old GUI
 local CoreGui = game:GetService("CoreGui")
-local existing = CoreGui:FindFirstChild("UltraGUI")
-if existing then existing:Destroy() end
 
--- Create GUI
+-- Remove old GUI
+local old = CoreGui:FindFirstChild("UltraGUI")
+if old then old:Destroy() end
+
+-- Create GUI container
 local screenGui = Instance.new("ScreenGui", CoreGui)
 screenGui.Name = "UltraGUI"
 
-local function roundCorner(inst, r)
+local function roundCorner(inst, radius)
     local c = Instance.new("UICorner", inst)
-    c.CornerRadius = UDim.new(0, r or 12)
+    c.CornerRadius = UDim.new(0, radius or 8)
 end
 
+-- Main Frame
 local main = Instance.new("Frame", screenGui)
-main.Name = "Main"
-main.Size = UDim2.new(0, 420, 0, 380)
+main.Size = UDim2.new(0, 540, 0, 360)
+main.Position = UDim2.new(0.5, -270, 0.5, -180)
 main.AnchorPoint = Vector2.new(0.5, 0.5)
-main.Position = UDim2.new(0.5, 0, 0.5, 0)
 main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-roundCorner(main, 15)
+roundCorner(main, 12)
 
-local stroke = Instance.new("UIStroke", main)
-stroke.Thickness = 2
-stroke.Color = Color3.fromRGB(60, 60, 60)
-
--- Title Bar
+-- Draggable Title Bar
 local titleBar = Instance.new("Frame", main)
 titleBar.Size = UDim2.new(1, 0, 0, 40)
 titleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-roundCorner(titleBar, 15)
+roundCorner(titleBar, 12)
 
 local titleLabel = Instance.new("TextLabel", titleBar)
-titleLabel.Size = UDim2.new(1, -120, 1, 0)
-titleLabel.Position = UDim2.new(0, 0, 0, 0)
+titleLabel.Size = UDim2.new(1, -100, 1, 0)
+titleLabel.Position = UDim2.new(0, 20, 0, 0)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "Ultragui"
 titleLabel.Font = Enum.Font.GothamBold
 titleLabel.TextSize = 22
-titleLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
-titleLabel.TextXAlignment = Enum.TextXAlignment.Center
+titleLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
+titleLabel.Text = "Ultragui"
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 
+-- Close Button
 local closeBtn = Instance.new("TextButton", titleBar)
-closeBtn.Size = UDim2.new(0, 40, 1, 0)
-closeBtn.Position = UDim2.new(1, -40, 0, 0)
+closeBtn.Size = UDim2.new(0, 40, 1, -10)
+closeBtn.Position = UDim2.new(1, -50, 0, 5)
 closeBtn.Text = "X"
 closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 20
+closeBtn.TextSize = 18
+closeBtn.TextColor3 = Color3.fromRGB(255,255,255)
 closeBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
 roundCorner(closeBtn, 8)
 closeBtn.MouseButton1Click:Connect(function() screenGui:Destroy() end)
 
+-- Minimize Button
 local minBtn = Instance.new("TextButton", titleBar)
-minBtn.Size = UDim2.new(0, 40, 1, 0)
-minBtn.Position = UDim2.new(1, -80, 0, 0)
+minBtn.Size = UDim2.new(0, 40, 1, -10)
+minBtn.Position = UDim2.new(1, -100, 0, 5)
 minBtn.Text = "-"
 minBtn.Font = Enum.Font.GothamBold
-minBtn.TextSize = 26
-minBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+minBtn.TextSize = 24
+minBtn.TextColor3 = Color3.fromRGB(255,255,255)
+minBtn.BackgroundColor3 = Color3.fromRGB(120, 120, 120)
 roundCorner(minBtn, 8)
 
--- Dragging
+-- Drag Logic
 local dragging, dragStart, startPos
 titleBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -71,154 +71,81 @@ titleBar.InputBegan:Connect(function(input)
         dragStart = input.Position
         startPos = main.Position
         input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
         end)
     end
 end)
+
 titleBar.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement then
         UIS.InputChanged:Connect(function(move)
             if dragging and move.UserInputType == Enum.UserInputType.MouseMovement then
                 main.Position = UDim2.new(
-                    startPos.X.Scale,
-                    startPos.X.Offset + (move.Position.X - dragStart.X),
-                    startPos.Y.Scale,
-                    startPos.Y.Offset + (move.Position.Y - dragStart.Y)
+                    startPos.X.Scale, startPos.X.Offset + (move.Position.X - dragStart.X),
+                    startPos.Y.Scale, startPos.Y.Offset + (move.Position.Y - dragStart.Y)
                 )
             end
         end)
     end
 end)
 
--- Tab Bar
-local tabBar = Instance.new("Frame", main)
-tabBar.Size = UDim2.new(1, 0, 0, 40)
-tabBar.Position = UDim2.new(0, 0, 0, 40)
-tabBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+-- Content Holder
+local content = Instance.new("Frame", main)
+content.Size = UDim2.new(1, -40, 1, -100)
+content.Position = UDim2.new(0, 20, 0, 60)
+content.BackgroundTransparency = 1
 
-local function tabBtn(name, posX)
-    local btn = Instance.new("TextButton", tabBar)
-    btn.Size = UDim2.new(0, 210, 1, 0)
-    btn.Position = UDim2.new(0, posX, 0, 0)
-    btn.Text = name
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 18
-    btn.TextColor3 = Color3.fromRGB(230, 230, 230)
-    btn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-    roundCorner(btn, 8)
-    return btn
-end
-
-local charTab = tabBtn("characterscripts", 0)
-local tpTab   = tabBtn("teleports", 210)
-
--- Content Frames
-local function contentFrame()
-    local f = Instance.new("Frame", main)
-    f.Size = UDim2.new(1, -20, 1, -90)
-    f.Position = UDim2.new(0, 10, 0, 85)
-    f.BackgroundTransparency = 1
-    return f
-end
-
-local charContent = contentFrame()
-local tpContent   = contentFrame()
-tpContent.Visible = false
-local currentTab = "char"
-
-local function refreshTab(tab)
-    currentTab = tab
-    charContent.Visible = (tab == "char")
-    tpContent.Visible   = (tab == "tp")
-    charTab.BackgroundColor3 = tab == "char" and Color3.fromRGB(100,100,100) or Color3.fromRGB(70,70,70)
-    tpTab.BackgroundColor3   = tab == "tp"   and Color3.fromRGB(100,100,100) or Color3.fromRGB(70,70,70)
-end
-
-charTab.MouseButton1Click:Connect(function() refreshTab("char") end)
-tpTab.MouseButton1Click:Connect(function() refreshTab("tp") end)
-refreshTab("char")
-
--- Utility to create buttons
-local function makeBtn(parent, text, onClick)
+-- Buttons Creator
+local function makeBtn(parent, txt, func)
     local b = Instance.new("TextButton", parent)
-    b.Size = UDim2.new(1,0,0,40)
-    b.Text = text
+    b.Size = UDim2.new(0, 240, 0, 50)
+    b.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    b.TextColor3 = Color3.fromRGB(230, 230, 230)
     b.Font = Enum.Font.Gotham
     b.TextSize = 18
-    b.TextColor3 = Color3.fromRGB(230, 230, 230)
-    b.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    b.Text = txt
     roundCorner(b, 8)
-    b.AutoButtonColor = true
-    b.MouseButton1Click:Connect(onClick)
+    b.MouseButton1Click:Connect(func)
     return b
 end
 
--- Character Scripts
-local char = player.Character or player.CharacterAdded:Wait()
-local humanoid = char:WaitForChild("Humanoid")
-local god, speed, jump, invis = false, false, false, false
-local conns = {}
-local function clearConns()
-    for _,c in ipairs(conns) do c:Disconnect() end
-    conns = {}
+-- Character Scripts Column
+local charCol = Instance.new("Frame", content)
+charCol.Size = UDim2.new(0, 260, 1, 0)
+charCol.BackgroundTransparency = 1
+for i, txt in ipairs({"Speed", "High Jump", "Godmode", "Invisibility"}) do
+    local y = 10 + (i-1)*60
+    makeBtn(charCol, txt, function() end).Position = UDim2.new(0, 0, 0, y)
 end
 
-makeBtn(charContent,"Godmode", function()
-    god = not god
-    if god then
-        humanoid.MaxHealth = math.huge
-        humanoid.Health = humanoid.MaxHealth
-        table.insert(conns, humanoid.HealthChanged:Connect(function()
-            humanoid.Health = humanoid.MaxHealth
-        end))
-    else clearConns() humanoid.MaxHealth=100 humanoid.Health=100 end
-end)
-
-makeBtn(charContent,"Speed", function()
-    speed = not speed
-    humanoid.WalkSpeed = speed and 50 or 16
-end)
-
-makeBtn(charContent,"HighJump", function()
-    jump = not jump
-    humanoid.JumpPower = jump and 100 or 50
-end)
-
-makeBtn(charContent,"Invisibility", function()
-    invis = not invis
-    for _,p in ipairs(player.Character:GetChildren()) do
-        if p:IsA("BasePart") or p:IsA("Decal") then p.Transparency = invis and 1 or 0 end
-        if p:IsA("Accessory") and p:FindFirstChild("Handle") then
-            p.Handle.Transparency = invis and 1 or 0
-        end
-    end
-end)
-
-player.CharacterAdded:Connect(function(c)
-    char = c
-    humanoid = char:WaitForChild("Humanoid")
-    god,speed,jump,invis = false,false,false,false
-    clearConns()
-    humanoid.MaxHealth=100 humanoid.Health=100 humanoid.WalkSpeed=16 humanoid.JumpPower=50
-    for _,p in ipairs(c:GetChildren()) do
-        if p:IsA("BasePart") or p:IsA("Decal") then p.Transparency=0 end
-        if p:IsA("Accessory") and p:FindFirstChild("Handle") then p.Handle.Transparency=0 end
-    end
-end)
-
--- Teleports
+-- Teleports Column
+local tpCol = Instance.new("Frame", content)
+tpCol.Size = UDim2.new(0, 260, 1, 0)
+tpCol.Position = UDim2.new(0, 280, 0, 0)
+tpCol.BackgroundTransparency = 1
 local coords = {
-    {"Legend Island", Vector3.new(4524,1001,-3842)},
     {"Jungle Island", Vector3.new(-8393,53,2402)},
-    {"Magma Island", Vector3.new(-6813,35,-1279)},
+    {"Legend Island", Vector3.new(4524,1001,-3842)},
+    {"Magma Island", Vector3.new(-6813,35,-1279)}
 }
-
-for _,v in ipairs(coords) do
-    makeBtn(tpContent, v[1], function()
-        local c = player.Character or player.CharacterAdded:Wait()
-        local hrp = c:WaitForChild("HumanoidRootPart")
-        hrp.CFrame = CFrame.new(v[2])
-    end)
+for i, item in ipairs(coords) do
+    local y = 10 + (i-1)*60
+    makeBtn(tpCol, item[1], function()
+        local ch = player.Character or player.CharacterAdded:Wait()
+        ch:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(item[2])
+    end).Position = UDim2.new(0, 0, 0, y)
 end
+
+-- Minimize Func
+local isMin = false
+minBtn.MouseButton1Click:Connect(function()
+    isMin = not isMin
+    if isMin then
+        main.Size = UDim2.new(0, 540, 0, 40)
+        content.Visible = false
+    else
+        main.Size = UDim2.new(0, 540, 0, 360)
+        content.Visible = true
+    end
+end)
+
