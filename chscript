@@ -1,0 +1,274 @@
+--[[
+Delta executor script with GUI and toggles:
+Dark theme, smooth, centered, rounded corners, minimize/close buttons,
+and buttons for godmode, speed, highjump, invisibility.
+]]
+
+local player = game:GetService("Players").LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- Create ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "DeltaExecutorGUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = game:GetService("CoreGui") -- CoreGui is needed for executor GUIs
+
+-- Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 300, 0, 350)
+mainFrame.Position = UDim2.new(0.5, -150, 0.5, -175)
+mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 15)
+corner.Parent = mainFrame
+
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 2
+stroke.Color = Color3.fromRGB(60, 60, 60)
+stroke.Parent = mainFrame
+
+-- Title Bar
+local titleBar = Instance.new("Frame")
+titleBar.Name = "TitleBar"
+titleBar.Size = UDim2.new(1, 0, 0, 35)
+titleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+titleBar.BorderSizePixel = 0
+titleBar.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 15)
+titleCorner.Parent = titleBar
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Text = "Delta Executor GUI"
+titleLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Size = UDim2.new(1, -80, 1, 0)
+titleLabel.Position = UDim2.new(0, 10, 0, 0)
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextSize = 18
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = titleBar
+
+-- Minimize Button
+local minimizeBtn = Instance.new("TextButton")
+minimizeBtn.Size = UDim2.new(0, 30, 0, 25)
+minimizeBtn.Position = UDim2.new(1, -70, 0, 5)
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+minimizeBtn.BorderSizePixel = 0
+minimizeBtn.Text = "—"
+minimizeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+minimizeBtn.Font = Enum.Font.GothamBold
+minimizeBtn.TextSize = 20
+minimizeBtn.Parent = titleBar
+
+local minCorner = Instance.new("UICorner")
+minCorner.CornerRadius = UDim.new(0, 8)
+minCorner.Parent = minimizeBtn
+
+-- Close Button
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 30, 0, 25)
+closeBtn.Position = UDim2.new(1, -35, 0, 5)
+closeBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+closeBtn.BorderSizePixel = 0
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 20
+closeBtn.Parent = titleBar
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 8)
+closeCorner.Parent = closeBtn
+
+-- Buttons Container
+local buttonContainer = Instance.new("Frame")
+buttonContainer.Size = UDim2.new(1, -20, 1, -55)
+buttonContainer.Position = UDim2.new(0, 10, 0, 45)
+buttonContainer.BackgroundTransparency = 1
+buttonContainer.Parent = mainFrame
+
+local uiListLayout = Instance.new("UIListLayout")
+uiListLayout.Padding = UDim.new(0, 15)
+uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+uiListLayout.Parent = buttonContainer
+
+-- Helper function to create buttons
+local function createButton(text)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 50)
+    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    btn.BorderSizePixel = 0
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(220, 220, 220)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 20
+    btn.AutoButtonColor = true
+    btn.Parent = buttonContainer
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 12)
+    btnCorner.Parent = btn
+    
+    return btn
+end
+
+-- Create Buttons
+local godmodeBtn = createButton("Godmode")
+local speedBtn = createButton("Speed")
+local highjumpBtn = createButton("Highjump")
+local invisibilityBtn = createButton("Invisibility")
+
+-- Toggle states
+local godmodeEnabled = false
+local speedEnabled = false
+local highjumpEnabled = false
+local invisibilityEnabled = false
+
+-- Godmode (simple version: set humanoid health to huge and disable damage)
+godmodeBtn.MouseButton1Click:Connect(function()
+    godmodeEnabled = not godmodeEnabled
+    if godmodeEnabled then
+        godmodeBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+        humanoid.MaxHealth = math.huge
+        humanoid.Health = math.huge
+        humanoid.HealthChanged:Connect(function()
+            if godmodeEnabled and humanoid.Health < humanoid.MaxHealth then
+                humanoid.Health = humanoid.MaxHealth
+            end
+        end)
+    else
+        godmodeBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        humanoid.MaxHealth = 100
+        humanoid.Health = 100
+    end
+end)
+
+-- Speed toggle
+speedBtn.MouseButton1Click:Connect(function()
+    speedEnabled = not speedEnabled
+    if speedEnabled then
+        speedBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+        humanoid.WalkSpeed = 50
+    else
+        speedBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        humanoid.WalkSpeed = 16
+    end
+end)
+
+-- Highjump toggle (increase JumpPower)
+highjumpBtn.MouseButton1Click:Connect(function()
+    highjumpEnabled = not highjumpEnabled
+    if highjumpEnabled then
+        highjumpBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+        humanoid.JumpPower = 100
+    else
+        highjumpBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        humanoid.JumpPower = 50
+    end
+end)
+
+-- Invisibility toggle
+invisibilityBtn.MouseButton1Click:Connect(function()
+    invisibilityEnabled = not invisibilityEnabled
+    if invisibilityEnabled then
+        invisibilityBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+        for _, part in pairs(character:GetChildren()) do
+            if part:IsA("BasePart") then
+                part.Transparency = 1
+                if part:FindFirstChildOfClass("Decal") then
+                    for _, decal in pairs(part:GetChildren()) do
+                        if decal:IsA("Decal") then
+                            decal.Transparency = 1
+                        end
+                    end
+                end
+            elseif part:IsA("Accessory") then
+                if part.Handle then
+                    part.Handle.Transparency = 1
+                end
+            end
+        end
+    else
+        invisibilityBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        for _, part in pairs(character:GetChildren()) do
+            if part:IsA("BasePart") then
+                part.Transparency = 0
+                if part:FindFirstChildOfClass("Decal") then
+                    for _, decal in pairs(part:GetChildren()) do
+                        if decal:IsA("Decal") then
+                            decal.Transparency = 0
+                        end
+                    end
+                end
+            elseif part:IsA("Accessory") then
+                if part.Handle then
+                    part.Handle.Transparency = 0
+                end
+            end
+        end
+    end
+end)
+
+-- Minimize functionality
+local minimized = false
+minimizeBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        buttonContainer.Visible = false
+        mainFrame.Size = UDim2.new(0, 300, 0, 35)
+    else
+        buttonContainer.Visible = true
+        mainFrame.Size = UDim2.new(0, 300, 0, 350)
+    end
+end)
+
+-- Close functionality
+closeBtn.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+end)
+
+-- Draggable GUI
+local UserInputService = game:GetService("UserInputService")
+
+local dragging = false
+local dragInput, dragStart, startPos
+
+titleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+titleBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
