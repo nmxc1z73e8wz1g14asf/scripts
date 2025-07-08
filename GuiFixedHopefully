@@ -1,112 +1,75 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
-local UserInputService = game:GetService("UserInputService")
+local UIS = game:GetService("UserInputService")
 
 -- Clear old GUI
 local CoreGui = game:GetService("CoreGui")
-local existingGui = CoreGui:FindFirstChild("UltraGUI")
-if existingGui then existingGui:Destroy() end
+local existing = CoreGui:FindFirstChild("UltraGUI")
+if existing then existing:Destroy() end
 
--- Create ScreenGui
-local screenGui = Instance.new("ScreenGui")
+-- Create GUI
+local screenGui = Instance.new("ScreenGui", CoreGui)
 screenGui.Name = "UltraGUI"
-screenGui.ResetOnSpawn = false
-screenGui.Parent = CoreGui
 
--- Main Frame
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 420, 0, 380)
-mainFrame.Position = UDim2.new(0.5, -210, 0.5, -190)
-mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-mainFrame.BorderSizePixel = 0
-mainFrame.Parent = screenGui
-
-local function createUICorner(parent, radius)
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, radius or 12)
-    corner.Parent = parent
-    return corner
+local function roundCorner(inst, r)
+    local c = Instance.new("UICorner", inst)
+    c.CornerRadius = UDim.new(0, r or 12)
 end
-createUICorner(mainFrame, 15)
+
+local main = Instance.new("Frame", screenGui)
+main.Name = "Main"
+main.Size = UDim2.new(0, 420, 0, 380)
+main.AnchorPoint = Vector2.new(0.5, 0.5)
+main.Position = UDim2.new(0.5, 0, 0.5, 0)
+main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+roundCorner(main, 15)
+
+local stroke = Instance.new("UIStroke", main)
+stroke.Thickness = 2
+stroke.Color = Color3.fromRGB(60, 60, 60)
 
 -- Title Bar
-local titleBar = Instance.new("Frame")
+local titleBar = Instance.new("Frame", main)
 titleBar.Size = UDim2.new(1, 0, 0, 40)
 titleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-titleBar.BorderSizePixel = 0
-titleBar.Parent = mainFrame
-createUICorner(titleBar, 15)
+roundCorner(titleBar, 15)
 
--- Title Label (centered)
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Text = "Ultragui"
-titleLabel.Size = UDim2.new(1, -100, 1, 0)
+local titleLabel = Instance.new("TextLabel", titleBar)
+titleLabel.Size = UDim2.new(1, -120, 1, 0)
 titleLabel.Position = UDim2.new(0, 0, 0, 0)
 titleLabel.BackgroundTransparency = 1
-titleLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+titleLabel.Text = "Ultragui"
 titleLabel.Font = Enum.Font.GothamBold
 titleLabel.TextSize = 22
+titleLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
 titleLabel.TextXAlignment = Enum.TextXAlignment.Center
-titleLabel.Parent = titleBar
 
--- Close Button
-local closeBtn = Instance.new("TextButton")
+local closeBtn = Instance.new("TextButton", titleBar)
 closeBtn.Size = UDim2.new(0, 40, 1, 0)
 closeBtn.Position = UDim2.new(1, -40, 0, 0)
-closeBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-closeBtn.BorderSizePixel = 0
 closeBtn.Text = "X"
-closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 closeBtn.Font = Enum.Font.GothamBold
 closeBtn.TextSize = 20
-closeBtn.Parent = titleBar
-createUICorner(closeBtn, 8)
+closeBtn.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+roundCorner(closeBtn, 8)
+closeBtn.MouseButton1Click:Connect(function() screenGui:Destroy() end)
 
-closeBtn.MouseButton1Click:Connect(function()
-    screenGui:Destroy()
-end)
+local minBtn = Instance.new("TextButton", titleBar)
+minBtn.Size = UDim2.new(0, 40, 1, 0)
+minBtn.Position = UDim2.new(1, -80, 0, 0)
+minBtn.Text = "-"
+minBtn.Font = Enum.Font.GothamBold
+minBtn.TextSize = 26
+minBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+roundCorner(minBtn, 8)
 
--- Minimize Button
-local minimizeBtn = Instance.new("TextButton")
-minimizeBtn.Size = UDim2.new(0, 40, 1, 0)
-minimizeBtn.Position = UDim2.new(1, -80, 0, 0)
-minimizeBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-minimizeBtn.BorderSizePixel = 0
-minimizeBtn.Text = "-"
-minimizeBtn.TextColor3 = Color3.fromRGB(230, 230, 230)
-minimizeBtn.Font = Enum.Font.GothamBold
-minimizeBtn.TextSize = 26
-minimizeBtn.Parent = titleBar
-createUICorner(minimizeBtn, 8)
-
-local minimized = false
-minimizeBtn.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    if minimized then
-        mainFrame.Size = UDim2.new(0, 420, 0, 40)
-        charContent.Visible = false
-        tpContent.Visible = false
-    else
-        mainFrame.Size = UDim2.new(0, 420, 0, 380)
-        if currentTab == "char" then
-            charContent.Visible = true
-            tpContent.Visible = false
-        else
-            charContent.Visible = false
-            tpContent.Visible = true
-        end
-    end
-end)
-
--- Dragging logic
-local dragging, dragInput, dragStart, startPos = false, nil, nil, nil
-
+-- Dragging
+local dragging, dragStart, startPos
 titleBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
         dragStart = input.Position
-        startPos = mainFrame.Position
+        startPos = main.Position
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
                 dragging = false
@@ -114,238 +77,148 @@ titleBar.InputBegan:Connect(function(input)
         end)
     end
 end)
-
 titleBar.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        local newPos = UDim2.new(
-            startPos.X.Scale,
-            math.clamp(startPos.X.Offset + delta.X, 0, workspace.CurrentCamera.ViewportSize.X - mainFrame.AbsoluteSize.X),
-            startPos.Y.Scale,
-            math.clamp(startPos.Y.Offset + delta.Y, 0, workspace.CurrentCamera.ViewportSize.Y - mainFrame.AbsoluteSize.Y)
-        )
-        mainFrame.Position = newPos
-    end
-end)
-
--- Tabs bar under title bar
-local tabsBar = Instance.new("Frame")
-tabsBar.Size = UDim2.new(1, 0, 0, 40)
-tabsBar.Position = UDim2.new(0, 0, 0, 40)
-tabsBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-tabsBar.BorderSizePixel = 0
-tabsBar.Parent = mainFrame
-createUICorner(tabsBar, 10)
-
-local function createTabButton(name, posX)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 210, 1, 0)
-    btn.Position = UDim2.new(0, posX, 0, 0)
-    btn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-    btn.BorderSizePixel = 0
-    btn.Text = name
-    btn.TextColor3 = Color3.fromRGB(230, 230, 230)
-    btn.Font = Enum.Font.GothamSemibold
-    btn.TextSize = 18
-    btn.Parent = tabsBar
-    createUICorner(btn, 8)
-    return btn
-end
-
-local charTabBtn = createTabButton("characterscripts", 0)
-local tpTabBtn = createTabButton("teleports", 210)
-
--- Content Frames
-local charContent = Instance.new("Frame")
-charContent.Size = UDim2.new(1, -20, 1, -90)
-charContent.Position = UDim2.new(0, 10, 0, 85)
-charContent.BackgroundTransparency = 1
-charContent.Parent = mainFrame
-
-local tpContent = Instance.new("Frame")
-tpContent.Size = UDim2.new(1, -20, 1, -90)
-tpContent.Position = UDim2.new(0, 10, 0, 85)
-tpContent.BackgroundTransparency = 1
-tpContent.Visible = false
-tpContent.Parent = mainFrame
-
--- Tab switch logic
-local currentTab = "char"
-
-local function setActiveTab(tab)
-    currentTab = tab
-    if tab == "char" then
-        charContent.Visible = true
-        tpContent.Visible = false
-        charTabBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-        tpTabBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-    else
-        charContent.Visible = false
-        tpContent.Visible = true
-        tpTabBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-        charTabBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-    end
-end
-
-charTabBtn.MouseButton1Click:Connect(function()
-    setActiveTab("char")
-end)
-
-tpTabBtn.MouseButton1Click:Connect(function()
-    setActiveTab("tp")
-end)
-
-setActiveTab("char")
-
--- Helper to create buttons in content
-local function createButton(parent, text)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 40)
-    btn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-    btn.BorderSizePixel = 0
-    btn.Text = text
-    btn.TextColor3 = Color3.fromRGB(230, 230, 230)
-    btn.Font = Enum.Font.GothamSemibold
-    btn.TextSize = 18
-    btn.AutoButtonColor = true
-    btn.Parent = parent
-    createUICorner(btn, 10)
-    return btn
-end
-
--- Character scripts setup
-
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
-
-local godmodeEnabled = false
-local speedEnabled = false
-local highjumpEnabled = false
-local invisibilityEnabled = false
-local connections = {}
-
-local function clearConnections()
-    for _, conn in pairs(connections) do
-        if conn.Connected then
-            conn:Disconnect()
-        end
-    end
-    connections = {}
-end
-
-local function setCharacterTransparency(transparency)
-    if not player.Character then return end
-    for _, part in pairs(player.Character:GetChildren()) do
-        if part:IsA("BasePart") or part:IsA("Decal") then
-            part.Transparency = transparency
-        elseif part:IsA("Accessory") and part:FindFirstChild("Handle") then
-            part.Handle.Transparency = transparency
-        end
-    end
-end
-
--- Godmode button
-local godBtn = createButton(charContent, "Godmode")
-godBtn.MouseButton1Click:Connect(function()
-    godmodeEnabled = not godmodeEnabled
-    if godmodeEnabled then
-        godBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
-        humanoid.MaxHealth = math.huge
-        humanoid.Health = humanoid.MaxHealth
-        local conn = humanoid.HealthChanged:Connect(function()
-            if godmodeEnabled and humanoid.Health < humanoid.MaxHealth then
-                humanoid.Health = humanoid.MaxHealth
+        UIS.InputChanged:Connect(function(move)
+            if dragging and move.UserInputType == Enum.UserInputType.MouseMovement then
+                main.Position = UDim2.new(
+                    startPos.X.Scale,
+                    startPos.X.Offset + (move.Position.X - dragStart.X),
+                    startPos.Y.Scale,
+                    startPos.Y.Offset + (move.Position.Y - dragStart.Y)
+                )
             end
         end)
-        table.insert(connections, conn)
-    else
-        godBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-        humanoid.MaxHealth = 100
-        humanoid.Health = 100
-        clearConnections()
     end
 end)
 
--- Speed button
-local speedBtn = createButton(charContent, "Speed")
-speedBtn.MouseButton1Click:Connect(function()
-    speedEnabled = not speedEnabled
-    if speedEnabled then
-        speedBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
-        humanoid.WalkSpeed = 50
-    else
-        speedBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-        humanoid.WalkSpeed = 16
+-- Tab Bar
+local tabBar = Instance.new("Frame", main)
+tabBar.Size = UDim2.new(1, 0, 0, 40)
+tabBar.Position = UDim2.new(0, 0, 0, 40)
+tabBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+
+local function tabBtn(name, posX)
+    local btn = Instance.new("TextButton", tabBar)
+    btn.Size = UDim2.new(0, 210, 1, 0)
+    btn.Position = UDim2.new(0, posX, 0, 0)
+    btn.Text = name
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 18
+    btn.TextColor3 = Color3.fromRGB(230, 230, 230)
+    btn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    roundCorner(btn, 8)
+    return btn
+end
+
+local charTab = tabBtn("characterscripts", 0)
+local tpTab   = tabBtn("teleports", 210)
+
+-- Content Frames
+local function contentFrame()
+    local f = Instance.new("Frame", main)
+    f.Size = UDim2.new(1, -20, 1, -90)
+    f.Position = UDim2.new(0, 10, 0, 85)
+    f.BackgroundTransparency = 1
+    return f
+end
+
+local charContent = contentFrame()
+local tpContent   = contentFrame()
+tpContent.Visible = false
+local currentTab = "char"
+
+local function refreshTab(tab)
+    currentTab = tab
+    charContent.Visible = (tab == "char")
+    tpContent.Visible   = (tab == "tp")
+    charTab.BackgroundColor3 = tab == "char" and Color3.fromRGB(100,100,100) or Color3.fromRGB(70,70,70)
+    tpTab.BackgroundColor3   = tab == "tp"   and Color3.fromRGB(100,100,100) or Color3.fromRGB(70,70,70)
+end
+
+charTab.MouseButton1Click:Connect(function() refreshTab("char") end)
+tpTab.MouseButton1Click:Connect(function() refreshTab("tp") end)
+refreshTab("char")
+
+-- Utility to create buttons
+local function makeBtn(parent, text, onClick)
+    local b = Instance.new("TextButton", parent)
+    b.Size = UDim2.new(1,0,0,40)
+    b.Text = text
+    b.Font = Enum.Font.Gotham
+    b.TextSize = 18
+    b.TextColor3 = Color3.fromRGB(230, 230, 230)
+    b.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    roundCorner(b, 8)
+    b.AutoButtonColor = true
+    b.MouseButton1Click:Connect(onClick)
+    return b
+end
+
+-- Character Scripts
+local char = player.Character or player.CharacterAdded:Wait()
+local humanoid = char:WaitForChild("Humanoid")
+local god, speed, jump, invis = false, false, false, false
+local conns = {}
+local function clearConns()
+    for _,c in ipairs(conns) do c:Disconnect() end
+    conns = {}
+end
+
+makeBtn(charContent,"Godmode", function()
+    god = not god
+    if god then
+        humanoid.MaxHealth = math.huge
+        humanoid.Health = humanoid.MaxHealth
+        table.insert(conns, humanoid.HealthChanged:Connect(function()
+            humanoid.Health = humanoid.MaxHealth
+        end))
+    else clearConns() humanoid.MaxHealth=100 humanoid.Health=100 end
+end)
+
+makeBtn(charContent,"Speed", function()
+    speed = not speed
+    humanoid.WalkSpeed = speed and 50 or 16
+end)
+
+makeBtn(charContent,"HighJump", function()
+    jump = not jump
+    humanoid.JumpPower = jump and 100 or 50
+end)
+
+makeBtn(charContent,"Invisibility", function()
+    invis = not invis
+    for _,p in ipairs(player.Character:GetChildren()) do
+        if p:IsA("BasePart") or p:IsA("Decal") then p.Transparency = invis and 1 or 0 end
+        if p:IsA("Accessory") and p:FindFirstChild("Handle") then
+            p.Handle.Transparency = invis and 1 or 0
+        end
     end
 end)
 
--- HighJump button
-local highjumpBtn = createButton(charContent, "HighJump")
-highjumpBtn.MouseButton1Click:Connect(function()
-    highjumpEnabled = not highjumpEnabled
-    if highjumpEnabled then
-        highjumpBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
-        humanoid.JumpPower = 100
-    else
-        highjumpBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-        humanoid.JumpPower = 50
-    end
-end)
-
--- Invisibility button
-local invisBtn = createButton(charContent, "Invisibility")
-invisBtn.MouseButton1Click:Connect(function()
-    invisibilityEnabled = not invisibilityEnabled
-    if invisibilityEnabled then
-        invisBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
-        setCharacterTransparency(1)
-    else
-        invisBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-        setCharacterTransparency(0)
-    end
-end)
-
--- Reset character scripts on respawn
-player.CharacterAdded:Connect(function(char)
-    character = char
+player.CharacterAdded:Connect(function(c)
+    char = c
     humanoid = char:WaitForChild("Humanoid")
-
-    godmodeEnabled = false
-    speedEnabled = false
-    highjumpEnabled = false
-    invisibilityEnabled = false
-    clearConnections()
-
-    godBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-    speedBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-    highjumpBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-    invisBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-
-    humanoid.MaxHealth = 100
-    humanoid.Health = 100
-    humanoid.WalkSpeed = 16
-    humanoid.JumpPower = 50
-    setCharacterTransparency(0)
+    god,speed,jump,invis = false,false,false,false
+    clearConns()
+    humanoid.MaxHealth=100 humanoid.Health=100 humanoid.WalkSpeed=16 humanoid.JumpPower=50
+    for _,p in ipairs(c:GetChildren()) do
+        if p:IsA("BasePart") or p:IsA("Decal") then p.Transparency=0 end
+        if p:IsA("Accessory") and p:FindFirstChild("Handle") then p.Handle.Transparency=0 end
+    end
 end)
 
--- Teleports setup
-local teleports = {
-    {name = "Legend Island", pos = Vector3.new(4524, 1001, -3842)},
-    {name = "Jungle Island", pos = Vector3.new(-8393, 53, 2402)},
-    {name = "Magma Island", pos = Vector3.new(-6813, 35, -1279)},
+-- Teleports
+local coords = {
+    {"Legend Island", Vector3.new(4524,1001,-3842)},
+    {"Jungle Island", Vector3.new(-8393,53,2402)},
+    {"Magma Island", Vector3.new(-6813,35,-1279)},
 }
 
-for _, tp in ipairs(teleports) do
-    local tpBtn = createButton(tpContent, tp.name)
-    tpBtn.MouseButton1Click:Connect(function()
-        local char = player.Character or player.CharacterAdded:Wait()
-        local hrp = char:WaitForChild("HumanoidRootPart")
-        hrp.CFrame = CFrame.new(tp.pos)
+for _,v in ipairs(coords) do
+    makeBtn(tpContent, v[1], function()
+        local c = player.Character or player.CharacterAdded:Wait()
+        local hrp = c:WaitForChild("HumanoidRootPart")
+        hrp.CFrame = CFrame.new(v[2])
     end)
 end
