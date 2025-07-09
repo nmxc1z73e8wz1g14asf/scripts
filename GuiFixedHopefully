@@ -1,188 +1,96 @@
--- Cleanup old GUI
-if game.CoreGui:FindFirstChild("DarkPowerGUI") then
-    game.CoreGui.DarkPowerGUI:Destroy()
+-- Dark UI with Teleport Buttons for Executors (KRNL, Synapse, etc.)
+
+-- [ UI Setup ]
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "DarkTeleportUI"
+
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 400, 0, 300)
+Frame.Position = UDim2.new(0.3, 0, 0.3, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Frame.Active = true
+Frame.Draggable = true
+Frame.BorderSizePixel = 0
+
+local UICorner = Instance.new("UICorner", Frame)
+UICorner.CornerRadius = UDim.new(0, 12)
+
+local Title = Instance.new("TextLabel", Frame)
+Title.Text = "🚗 Teleport Menu"
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 20
+
+-- [ Close Button ]
+local Close = Instance.new("TextButton", Frame)
+Close.Text = "X"
+Close.Size = UDim2.new(0, 30, 0, 30)
+Close.Position = UDim2.new(1, -35, 0, 0)
+Close.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+Close.TextColor3 = Color3.fromRGB(255, 70, 70)
+Close.Font = Enum.Font.GothamBold
+Close.TextSize = 16
+Close.BorderSizePixel = 0
+Instance.new("UICorner", Close).CornerRadius = UDim.new(0, 6)
+Close.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- [ Minimize Button ]
+local Minimize = Instance.new("TextButton", Frame)
+Minimize.Text = "_"
+Minimize.Size = UDim2.new(0, 30, 0, 30)
+Minimize.Position = UDim2.new(1, -70, 0, 0)
+Minimize.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+Minimize.TextColor3 = Color3.fromRGB(200, 200, 200)
+Minimize.Font = Enum.Font.GothamBold
+Minimize.TextSize = 16
+Minimize.BorderSizePixel = 0
+Instance.new("UICorner", Minimize).CornerRadius = UDim.new(0, 6)
+
+local minimized = false
+Minimize.MouseButton1Click:Connect(function()
+    for _, child in pairs(Frame:GetChildren()) do
+        if not (child == Title or child == Minimize or child == Close or child:IsA("UICorner")) then
+            child.Visible = not minimized
+        end
+    end
+    Frame.Size = minimized and UDim2.new(0, 400, 0, 300) or UDim2.new(0, 400, 0, 30)
+    minimized = not minimized
+end)
+
+-- [ Teleport Function ]
+local function teleportTo(pos)
+    local player = game.Players.LocalPlayer
+    if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        player.Character.HumanoidRootPart.CFrame = CFrame.new(pos)
+    end
 end
 
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local UserInputService = game:GetService("UserInputService")
+-- [ Create Teleport Buttons ]
+local locations = {
+    {name = "🏬 JStore", pos = Vector3.new(82, 21, 1315)},
+    {name = "🏛️ Museum", pos = Vector3.new(1065, 153, 1311)},
+    {name = "🏦 Bank 1", pos = Vector3.new(-14, 19, 861)},
+    {name = "⚡ Powerplant", pos = Vector3.new(43, 26, 2336)},
+    {name = "🎰 Casino", pos = Vector3.new(-220, 23, -4635)},
+}
 
-local function getCharacter()
-    local char = player.Character or player.CharacterAdded:Wait()
-    local hum = char:WaitForChild("Humanoid")
-    local root = char:WaitForChild("HumanoidRootPart")
-    return char, hum, root
-end
-
--- Create GUI
-local gui = Instance.new("ScreenGui")
-gui.Name = "DarkPowerGUI"
-gui.Parent = game.CoreGui
-
-local frame = Instance.new("Frame")
-frame.Name = "MainFrame"
-frame.Size = UDim2.new(0, 400, 0, 300)
-frame.Position = UDim2.new(0.5, -200, 0.5, -150)
-frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-frame.BorderSizePixel = 0
-frame.Parent = gui
-
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 15)
-corner.Parent = frame
-
--- Header (Drag Handle)
-local header = Instance.new("Frame")
-header.Name = "Header"
-header.Size = UDim2.new(1, 0, 0, 40)
-header.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-header.Parent = frame
-
-local headerCorner = Instance.new("UICorner")
-headerCorner.CornerRadius = UDim.new(0, 15)
-headerCorner.Parent = header
-
-local title = Instance.new("TextLabel")
-title.Text = "DarkPower GUI"
-title.Font = Enum.Font.GothamBold
-title.TextSize = 22
-title.TextColor3 = Color3.fromRGB(220, 220, 220)
-title.BackgroundTransparency = 1
-title.Size = UDim2.new(1, -100, 1, 0)
-title.Position = UDim2.new(0, 15, 0, 0)
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.Parent = header
-
-local closeBtn = Instance.new("TextButton")
-closeBtn.Text = "✕"
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 24
-closeBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
-closeBtn.BackgroundTransparency = 1
-closeBtn.Size = UDim2.new(0, 40, 1, 0)
-closeBtn.Position = UDim2.new(1, -45, 0, 0)
-closeBtn.Parent = header
-
--- Content Area
-local contentArea = Instance.new("Frame")
-contentArea.Size = UDim2.new(1, 0, 1, -40)
-contentArea.Position = UDim2.new(0, 0, 0, 40)
-contentArea.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-contentArea.Parent = frame
-
-local contentCorner = Instance.new("UICorner")
-contentCorner.CornerRadius = UDim.new(0, 12)
-contentCorner.Parent = contentArea
-
--- Create Buttons
-local function createButton(text, callback)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -20, 0, 40)
-    btn.Position = UDim2.new(0, 10, 0, 10)
-    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+for i, loc in pairs(locations) do
+    local btn = Instance.new("TextButton", Frame)
+    btn.Size = UDim2.new(0, 360, 0, 40)
+    btn.Position = UDim2.new(0, 20, 0, 30 + (i * 45))
+    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.Gotham
-    btn.TextSize = 18
-    btn.Text = text
+    btn.TextSize = 16
+    btn.Text = loc.name
     btn.BorderSizePixel = 0
-    btn.Parent = contentArea
-    
-    local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim.new(0, 8)
-    btnCorner.Parent = btn
-    
-    btn.MouseButton1Click:Connect(callback)
-    return btn
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+
+    btn.MouseButton1Click:Connect(function()
+        teleportTo(loc.pos)
+    end)
 end
-
--- Character Buttons
-createButton("Speed Boost (75)", function()
-    local _, hum = getCharacter()
-    if hum then hum.WalkSpeed = 75 end
-end)
-
-createButton("God Mode", function()
-    local _, hum = getCharacter()
-    if hum then
-        hum.MaxHealth = math.huge
-        hum.Health = math.huge
-    end
-end)
-
-createButton("High Jump (200)", function()
-    local _, hum = getCharacter()
-    if hum then hum.JumpPower = 200 end
-end)
-
-createButton("Reset", function()
-    local _, hum = getCharacter()
-    if hum then
-        hum.WalkSpeed = 16
-        hum.JumpPower = 50
-        hum.MaxHealth = 100
-        hum.Health = 100
-    end
-end)
-
--- Teleport Buttons
-createButton("Jungle Island", function()
-    local _, _, root = getCharacter()
-    if root then
-        root.CFrame = CFrame.new(Vector3.new(-8514, 50, 2393) + Vector3.new(0,5,0))
-    end
-end)
-
-createButton("Frozen Island", function()
-    local _, _, root = getCharacter()
-    if root then
-        root.CFrame = CFrame.new(Vector3.new(-2738, 25, -405) + Vector3.new(0,5,0))
-    end
-end)
-
-createButton("Legend Island", function()
-    local _, _, root = getCharacter()
-    if root then
-        root.CFrame = CFrame.new(Vector3.new(4416, 1001, -3858) + Vector3.new(0,5,0))
-    end
-end)
-
-createButton("Mythical Island", function()
-    local _, _, root = getCharacter()
-    if root then
-        root.CFrame = CFrame.new(Vector3.new(2397, 15, 1072) + Vector3.new(0,5,0))
-    end
-end)
-
--- Drag Functionality
-local dragInput = nil
-local dragStart = nil
-local startPos = nil
-
-local function update(input)
-    local delta = input.Position - dragStart
-    frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-end
-
-header.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragStart = input.Position
-        startPos = frame.Position
-        
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragInput = nil
-            end
-        end)
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput then
-        update(input)
-    end
-end)
-
--- Close Button
-closeBtn.MouseButton1Click:Connect(function()
-    gui:Destroy()
-end)
