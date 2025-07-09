@@ -1,96 +1,103 @@
--- Dark UI with Teleport Buttons for Executors (KRNL, Synapse, etc.)
+-- Jailbreak Stealth Teleport GUI
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
+local char = lp.Character or lp.CharacterAdded:Wait()
 
--- [ UI Setup ]
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-ScreenGui.Name = "DarkTeleportUI"
+-- GUI Setup
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "TeleportGUI"
 
-local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.new(0, 400, 0, 300)
-Frame.Position = UDim2.new(0.3, 0, 0.3, 0)
-Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-Frame.Active = true
-Frame.Draggable = true
-Frame.BorderSizePixel = 0
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 400, 0, 300)
+frame.Position = UDim2.new(0.5, -200, 0.5, -150)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
 
-local UICorner = Instance.new("UICorner", Frame)
-UICorner.CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
 
-local Title = Instance.new("TextLabel", Frame)
-Title.Text = "🚗 Teleport Menu"
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.BackgroundTransparency = 1
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 20
+-- Title
+local title = Instance.new("TextLabel", frame)
+title.Text = "🚗 Jailbreak Teleports"
+title.Size = UDim2.new(1, 0, 0, 30)
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 18
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Position = UDim2.new(0, 10, 0, 0)
 
--- [ Close Button ]
-local Close = Instance.new("TextButton", Frame)
-Close.Text = "X"
-Close.Size = UDim2.new(0, 30, 0, 30)
-Close.Position = UDim2.new(1, -35, 0, 0)
-Close.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-Close.TextColor3 = Color3.fromRGB(255, 70, 70)
-Close.Font = Enum.Font.GothamBold
-Close.TextSize = 16
-Close.BorderSizePixel = 0
-Instance.new("UICorner", Close).CornerRadius = UDim.new(0, 6)
-Close.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
+-- Close Button
+local closeBtn = Instance.new("TextButton", frame)
+closeBtn.Text = "X"
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -35, 0, 0)
+closeBtn.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 16
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
+
+closeBtn.MouseButton1Click:Connect(function()
+    gui:Destroy()
 end)
 
--- [ Minimize Button ]
-local Minimize = Instance.new("TextButton", Frame)
-Minimize.Text = "_"
-Minimize.Size = UDim2.new(0, 30, 0, 30)
-Minimize.Position = UDim2.new(1, -70, 0, 0)
-Minimize.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-Minimize.TextColor3 = Color3.fromRGB(200, 200, 200)
-Minimize.Font = Enum.Font.GothamBold
-Minimize.TextSize = 16
-Minimize.BorderSizePixel = 0
-Instance.new("UICorner", Minimize).CornerRadius = UDim.new(0, 6)
+-- Minimize Button
+local minBtn = Instance.new("TextButton", frame)
+minBtn.Text = "_"
+minBtn.Size = UDim2.new(0, 30, 0, 30)
+minBtn.Position = UDim2.new(1, -70, 0, 0)
+minBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+minBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+minBtn.Font = Enum.Font.GothamBold
+minBtn.TextSize = 16
+Instance.new("UICorner", minBtn).CornerRadius = UDim.new(0, 6)
 
 local minimized = false
-Minimize.MouseButton1Click:Connect(function()
-    for _, child in pairs(Frame:GetChildren()) do
-        if not (child == Title or child == Minimize or child == Close or child:IsA("UICorner")) then
-            child.Visible = not minimized
+minBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    for _, v in pairs(frame:GetChildren()) do
+        if v:IsA("TextButton") and v.Name ~= "Min" and v.Name ~= "Close" then
+            v.Visible = not minimized
         end
     end
-    Frame.Size = minimized and UDim2.new(0, 400, 0, 300) or UDim2.new(0, 400, 0, 30)
-    minimized = not minimized
+    frame.Size = minimized and UDim2.new(0, 400, 0, 30) or UDim2.new(0, 400, 0, 300)
 end)
 
--- [ Teleport Function ]
-local function teleportTo(pos)
-    local player = game.Players.LocalPlayer
-    if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(pos)
-    end
+-- Teleport Function (Stealth)
+local function safeTeleport(target)
+    local char = lp.Character or lp.CharacterAdded:Wait()
+    local root = char:WaitForChild("HumanoidRootPart")
+    local info = TweenInfo.new(2, Enum.EasingStyle.Linear)
+    local tween = TweenService:Create(root, info, {CFrame = CFrame.new(target)})
+    tween:Play()
 end
 
--- [ Create Teleport Buttons ]
+-- Locations
 local locations = {
-    {name = "🏬 JStore", pos = Vector3.new(82, 21, 1315)},
-    {name = "🏛️ Museum", pos = Vector3.new(1065, 153, 1311)},
-    {name = "🏦 Bank 1", pos = Vector3.new(-14, 19, 861)},
-    {name = "⚡ Powerplant", pos = Vector3.new(43, 26, 2336)},
-    {name = "🎰 Casino", pos = Vector3.new(-220, 23, -4635)},
+    {"🏬 JStore", Vector3.new(82, 21, 1315)},
+    {"🏛️ Museum", Vector3.new(1065, 153, 1311)},
+    {"🏦 Bank 1", Vector3.new(-14, 19, 861)},
+    {"⚡ Powerplant", Vector3.new(43, 26, 2336)},
+    {"🎰 Casino", Vector3.new(-220, 23, -4635)},
 }
 
-for i, loc in pairs(locations) do
-    local btn = Instance.new("TextButton", Frame)
+-- Create Buttons
+for i, loc in ipairs(locations) do
+    local btn = Instance.new("TextButton", frame)
     btn.Size = UDim2.new(0, 360, 0, 40)
-    btn.Position = UDim2.new(0, 20, 0, 30 + (i * 45))
-    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    btn.Position = UDim2.new(0, 20, 0, 40 + (i - 1) * 45)
+    btn.Text = loc[1]
+    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     btn.Font = Enum.Font.Gotham
     btn.TextSize = 16
-    btn.Text = loc.name
-    btn.BorderSizePixel = 0
+    btn.Name = "TeleportButton" .. i
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
 
     btn.MouseButton1Click:Connect(function()
-        teleportTo(loc.pos)
+        safeTeleport(loc[2])
     end)
 end
