@@ -1,13 +1,12 @@
--- Fast & Stealthy Teleport GUI for Jailbreak
+-- Jailbreak Vehicle Teleport GUI
 
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local lp = Players.LocalPlayer
 
 -- GUI Setup
 local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name = "StealthTeleportGUI"
+gui.Name = "VehicleTeleportGUI"
 
 local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0, 400, 0, 300)
@@ -19,7 +18,7 @@ frame.Draggable = true
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
 
 local title = Instance.new("TextLabel", frame)
-title.Text = "🚗 Stealth Teleport"
+title.Text = "🚗 Vehicle Teleport"
 title.Size = UDim2.new(1, 0, 0, 30)
 title.BackgroundTransparency = 1
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -37,7 +36,9 @@ closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 closeBtn.Font = Enum.Font.GothamBold
 closeBtn.TextSize = 16
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
-closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
+closeBtn.MouseButton1Click:Connect(function()
+    gui:Destroy()
+end)
 
 local minBtn = Instance.new("TextButton", frame)
 minBtn.Text = "_"
@@ -60,39 +61,6 @@ minBtn.MouseButton1Click:Connect(function()
     frame.Size = minimized and UDim2.new(0, 400, 0, 30) or UDim2.new(0, 400, 0, 300)
 end)
 
--- Teleport Function (Fast & Stealthy)
-local function stealthTeleport(targetPos)
-    local char = lp.Character or lp.CharacterAdded:Wait()
-    local root = char:WaitForChild("HumanoidRootPart")
-    local humanoid = char:FindFirstChildWhichIsA("Humanoid")
-    if not root or not humanoid then return end
-
-    -- Disable collisions on character parts to avoid clipping glitches
-    for _, part in pairs(char:GetChildren()) do
-        if part:IsA("BasePart") then
-            part.CanCollide = false
-        end
-    end
-
-    -- Instantly move slightly above target (avoid ground collision)
-    local aboveTarget = targetPos + Vector3.new(0, 5, 0)
-    root.CFrame = CFrame.new(aboveTarget)
-
-    -- Tween smoothly down to exact position quickly (~0.4 seconds)
-    local tweenInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local tween = TweenService:Create(root, tweenInfo, {CFrame = CFrame.new(targetPos)})
-
-    tween:Play()
-    tween.Completed:Wait()
-
-    -- Re-enable collisions
-    for _, part in pairs(char:GetChildren()) do
-        if part:IsA("BasePart") then
-            part.CanCollide = true
-        end
-    end
-end
-
 -- Locations
 local locations = {
     {"🏬 JStore", Vector3.new(82, 21, 1315)},
@@ -101,6 +69,48 @@ local locations = {
     {"⚡ Powerplant", Vector3.new(43, 26, 2336)},
     {"🎰 Casino", Vector3.new(-220, 23, -4635)},
 }
+
+-- Vehicle Teleport function
+local function teleportVehicle(targetPos)
+    local char = lp.Character or lp.CharacterAdded:Wait()
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    -- Find vehicle seat
+    local vehicleSeat = nil
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("VehicleSeat") and v.Occupant and v.Occupant.Parent == char then
+            vehicleSeat = v
+            break
+        end
+    end
+
+    if not vehicleSeat then
+        warn("You are not sitting in a vehicle!")
+        return
+    end
+
+    local vehicleModel = vehicleSeat:FindFirstAncestorWhichIsA("Model")
+    if not vehicleModel then
+        warn("Vehicle model not found!")
+        return
+    end
+
+    -- Teleport vehicle's PrimaryPart or HumanoidRootPart if available
+    local primaryPart = vehicleModel.PrimaryPart or vehicleModel:FindFirstChild("HumanoidRootPart")
+    if not primaryPart then
+        warn("Vehicle has no PrimaryPart or HumanoidRootPart!")
+        return
+    end
+
+    -- Move vehicle instantly slightly above target to avoid ground glitches
+    primaryPart.CFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
+
+    -- Tween down to target position smoothly
+    local tweenInfo = TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    local tween = TweenService:Create(primaryPart, tweenInfo, {CFrame = CFrame.new(targetPos)})
+    tween:Play()
+end
 
 -- Create Buttons
 for i, loc in ipairs(locations) do
@@ -115,6 +125,6 @@ for i, loc in ipairs(locations) do
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
 
     btn.MouseButton1Click:Connect(function()
-        stealthTeleport(loc[2])
+        teleportVehicle(loc[2])
     end)
 end
