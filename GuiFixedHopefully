@@ -1,103 +1,177 @@
--- Jailbreak Stealth Teleport GUI
-local TweenService = game:GetService("TweenService")
+-- // Services
 local Players = game:GetService("Players")
-local lp = Players.LocalPlayer
-local char = lp.Character or lp.CharacterAdded:Wait()
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
 
--- GUI Setup
-local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name = "TeleportGUI"
+-- // Wait for character and humanoid
+local function getHumanoid()
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local humanoid = char:WaitForChild("Humanoid")
+    return humanoid
+end
 
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 400, 0, 300)
-frame.Position = UDim2.new(0.5, -200, 0.5, -150)
-frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-frame.BorderSizePixel = 0
-frame.Active = true
-frame.Draggable = true
+local humanoid = getHumanoid()
 
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
+-- // Create ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "SpeedJumpGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = game.CoreGui
 
--- Title
-local title = Instance.new("TextLabel", frame)
-title.Text = "🚗 Jailbreak Teleports"
+-- // Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 320, 0, 180)
+mainFrame.Position = UDim2.new(0, 20, 0, 60)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.BorderSizePixel = 0
+mainFrame.AnchorPoint = Vector2.new(0, 0)
+mainFrame.Parent = screenGui
+mainFrame.ClipsDescendants = true
+mainFrame.Visible = true
+mainFrame.BackgroundTransparency = 0.1
+mainFrame.ZIndex = 10
+mainFrame.LayoutOrder = 1
+
+-- // UI Corner for round edges
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 8)
+uiCorner.Parent = mainFrame
+
+-- // Title Label
+local title = Instance.new("TextLabel")
+title.Text = "Speed & Jump Controller"
 title.Size = UDim2.new(1, 0, 0, 30)
 title.BackgroundTransparency = 1
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.Font = Enum.Font.GothamBold
+title.TextColor3 = Color3.fromRGB(220, 220, 220)
+title.Font = Enum.Font.GothamSemibold
 title.TextSize = 18
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.Position = UDim2.new(0, 10, 0, 0)
+title.Parent = mainFrame
 
--- Close Button
-local closeBtn = Instance.new("TextButton", frame)
-closeBtn.Text = "X"
-closeBtn.Size = UDim2.new(0, 30, 0, 30)
-closeBtn.Position = UDim2.new(1, -35, 0, 0)
-closeBtn.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
-closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 16
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
+-- // Function to create slider
+local function createSlider(name, min, max, default)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(1, -40, 0, 50)
+    container.Position = UDim2.new(0, 20, 0, 40)
+    container.BackgroundTransparency = 1
+    container.Parent = mainFrame
 
-closeBtn.MouseButton1Click:Connect(function()
-    gui:Destroy()
-end)
+    local label = Instance.new("TextLabel")
+    label.Text = name
+    label.Font = Enum.Font.GothamSemibold
+    label.TextSize = 14
+    label.TextColor3 = Color3.fromRGB(200, 200, 200)
+    label.BackgroundTransparency = 1
+    label.Position = UDim2.new(0, 0, 0, 0)
+    label.Size = UDim2.new(0.5, 0, 0, 20)
+    label.Parent = container
 
--- Minimize Button
-local minBtn = Instance.new("TextButton", frame)
-minBtn.Text = "_"
-minBtn.Size = UDim2.new(0, 30, 0, 30)
-minBtn.Position = UDim2.new(1, -70, 0, 0)
-minBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-minBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-minBtn.Font = Enum.Font.GothamBold
-minBtn.TextSize = 16
-Instance.new("UICorner", minBtn).CornerRadius = UDim.new(0, 6)
+    local valueLabel = Instance.new("TextLabel")
+    valueLabel.Text = tostring(default)
+    valueLabel.Font = Enum.Font.GothamSemibold
+    valueLabel.TextSize = 14
+    valueLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+    valueLabel.BackgroundTransparency = 1
+    valueLabel.Position = UDim2.new(0.5, 0, 0, 0)
+    valueLabel.Size = UDim2.new(0.5, 0, 0, 20)
+    valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+    valueLabel.Parent = container
 
-local minimized = false
-minBtn.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    for _, v in pairs(frame:GetChildren()) do
-        if v:IsA("TextButton") and v.Name ~= "Min" and v.Name ~= "Close" then
-            v.Visible = not minimized
+    local sliderBack = Instance.new("Frame")
+    sliderBack.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    sliderBack.Size = UDim2.new(1, 0, 0, 10)
+    sliderBack.Position = UDim2.new(0, 0, 0, 30)
+    sliderBack.Parent = container
+    sliderBack.ClipsDescendants = true
+    sliderBack.AnchorPoint = Vector2.new(0, 0)
+
+    local uiCornerBack = Instance.new("UICorner")
+    uiCornerBack.CornerRadius = UDim.new(0, 4)
+    uiCornerBack.Parent = sliderBack
+
+    local sliderFill = Instance.new("Frame")
+    sliderFill.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
+    sliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+    sliderFill.Parent = sliderBack
+
+    local uiCornerFill = Instance.new("UICorner")
+    uiCornerFill.CornerRadius = UDim.new(0, 4)
+    uiCornerFill.Parent = sliderFill
+
+    local dragging = false
+
+    sliderBack.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
         end
+    end)
+
+    sliderBack.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local mousePos = UserInputService:GetMouseLocation()
+            local relativeX = math.clamp(mousePos.X - sliderBack.AbsolutePosition.X, 0, sliderBack.AbsoluteSize.X)
+            local percent = relativeX / sliderBack.AbsoluteSize.X
+            sliderFill.Size = UDim2.new(percent, 0, 1, 0)
+
+            local value = math.floor(min + (max - min) * percent)
+            valueLabel.Text = tostring(value)
+            -- Return value for hooking later
+            container.Value = value
+        end
+    end)
+
+    container.Value = default
+    return container
+end
+
+-- // Create sliders
+local speedSlider = createSlider("Speed", 16, 250, 16)
+speedSlider.Position = UDim2.new(0, 20, 0, 40)
+
+local jumpSlider = createSlider("Jump Height", 50, 200, 50)
+jumpSlider.Position = UDim2.new(0, 20, 0, 100)
+
+speedSlider.Parent = mainFrame
+jumpSlider.Parent = mainFrame
+
+-- // Update humanoid properties every frame
+game:GetService("RunService").RenderStepped:Connect(function()
+    if humanoid and humanoid.Parent then
+        humanoid.WalkSpeed = speedSlider.Value
+        humanoid.JumpPower = jumpSlider.Value
+    else
+        humanoid = getHumanoid()
     end
-    frame.Size = minimized and UDim2.new(0, 400, 0, 30) or UDim2.new(0, 400, 0, 300)
 end)
 
--- Teleport Function (Stealth)
-local function safeTeleport(target)
-    local char = lp.Character or lp.CharacterAdded:Wait()
-    local root = char:WaitForChild("HumanoidRootPart")
-    local info = TweenInfo.new(2, Enum.EasingStyle.Linear)
-    local tween = TweenService:Create(root, info, {CFrame = CFrame.new(target)})
-    tween:Play()
-end
+-- // Toggle GUI visibility with a button (top-right)
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0, 30, 0, 30)
+toggleButton.Position = UDim2.new(1, -35, 0, 5)
+toggleButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+toggleButton.Text = "≡"
+toggleButton.Font = Enum.Font.GothamBold
+toggleButton.TextSize = 20
+toggleButton.TextColor3 = Color3.fromRGB(180, 180, 180)
+toggleButton.AutoButtonColor = false
+toggleButton.Parent = mainFrame
+toggleButton.AnchorPoint = Vector2.new(1, 0)
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(0, 5)
+toggleCorner.Parent = toggleButton
 
--- Locations
-local locations = {
-    {"🏬 JStore", Vector3.new(82, 21, 1315)},
-    {"🏛️ Museum", Vector3.new(1065, 153, 1311)},
-    {"🏦 Bank 1", Vector3.new(-14, 19, 861)},
-    {"⚡ Powerplant", Vector3.new(43, 26, 2336)},
-    {"🎰 Casino", Vector3.new(-220, 23, -4635)},
-}
+toggleButton.MouseEnter:Connect(function()
+    toggleButton.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
+end)
+toggleButton.MouseLeave:Connect(function()
+    toggleButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+end)
 
--- Create Buttons
-for i, loc in ipairs(locations) do
-    local btn = Instance.new("TextButton", frame)
-    btn.Size = UDim2.new(0, 360, 0, 40)
-    btn.Position = UDim2.new(0, 20, 0, 40 + (i - 1) * 45)
-    btn.Text = loc[1]
-    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.Gotham
-    btn.TextSize = 16
-    btn.Name = "TeleportButton" .. i
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
-
-    btn.MouseButton1Click:Connect(function()
-        safeTeleport(loc[2])
-    end)
-end
+toggleButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = not mainFrame.Visible
+end)
