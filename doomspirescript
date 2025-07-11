@@ -1,0 +1,121 @@
+-- Make draggable helper
+local function makeDraggable(frame)
+    local UserInputService = game:GetService("UserInputService")
+    local dragging
+    local dragInput
+    local dragStart
+    local startPos
+
+    local function update(input)
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            update(input)
+        end
+    end)
+end
+
+-- Teleport function
+local function teleportTo(position)
+    local plr = game:GetService("Players").LocalPlayer
+    if plr and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+        plr.Character.HumanoidRootPart.CFrame = CFrame.new(position)
+    end
+end
+
+-- Create GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "TPS_GUI"
+ScreenGui.Parent = game:GetService("CoreGui")
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 300, 0, 220)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -110)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 15)
+UICorner.Parent = MainFrame
+
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 30)
+TitleBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MainFrame
+
+local TitleUICorner = Instance.new("UICorner")
+TitleUICorner.CornerRadius = UDim.new(0, 15)
+TitleUICorner.Parent = TitleBar
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -10, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "TPS"
+Title.TextColor3 = Color3.fromRGB(230, 230, 230)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 20
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TitleBar
+
+makeDraggable(MainFrame)
+
+-- Data for buttons: {name, Vector3 position, Color3}
+local tpData = {
+    {"Red TP", Vector3.new(-131, 25, -1), Color3.fromRGB(255, 0, 0)},
+    {"Blue TP", Vector3.new(1, 27, 138), Color3.fromRGB(1, 27, 138)},
+    {"Yellow TP", Vector3.new(127, 32, -2), Color3.fromRGB(255, 255, 0)},
+    {"Green TP", Vector3.new(6, 25, -124), Color3.fromRGB(0, 255, 0)},
+}
+
+-- Create buttons
+for i, data in ipairs(tpData) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 260, 0, 40)
+    btn.Position = UDim2.new(0, 20, 0, 40 + (i-1)*50)
+    btn.BackgroundColor3 = data[3]
+    btn.BorderSizePixel = 0
+    btn.Text = data[1]
+    btn.TextColor3 = Color3.fromRGB(20, 20, 20)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 18
+    btn.Parent = MainFrame
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 10)
+    btnCorner.Parent = btn
+    
+    btn.MouseButton1Click:Connect(function()
+        teleportTo(data[2])
+    end)
+end
